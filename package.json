@@ -1,0 +1,24 @@
+{
+    "name": "svg-gen",
+    "type": "module",
+    "version": "1.0.0",
+    "description": "A tool for generating SVG files",
+    "main": "index.js",
+    "scripts": {
+        "test": "echo \"Error: no test specified\" && exit 1"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/mlitwin/svg-gen.git"
+    },
+    "keywords": [
+        "svg",
+        "generator"
+    ],
+    "author": "mlitwin",
+    "license": "Unlicense",
+    "bugs": {
+        "url": "https://github.com/mlitwin/svg-gen/issues"
+    },
+    "homepage": "https://github.com/mlitwin/svg-gen#readme"
+}
