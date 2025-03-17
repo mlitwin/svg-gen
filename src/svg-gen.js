@@ -4,7 +4,7 @@
 
 function node(svgGenInstance, type, spec, ...args) {
     this.type = type;
-    this.spec = spec
+    this.spec = spec;
     return svgGenInstance;
 }
 
@@ -64,27 +64,29 @@ const svgTypes = {
     path: {}
 };
 
-function textProcessor(node) {
+function textProcessor(cur, node) {
+    cur = cur || "";
     let text = `<${node.type}>`;
     text += `</${node.type}>`;
-    return text;
+    return cur + text;
 }
 
 
 function svgGen(options) {
     this.options = options || {};
     this.options.processor = this.options.processor || textProcessor;
+    this.ret = null;
     const thisInstance = this;
     Object.keys(svgTypes).forEach(type => {
         this[type] = function (...args) {
-            return new node(thisInstance, type, svgTypes[type], ...args);
+            const n = new node(thisInstance, type, svgTypes[type], ...args);
+            this.ret = this.options.processor(this.ret, n);
+            return n;
         };
     });
 
     return this;
 }
-
-
 
 export default svgGen;
 
