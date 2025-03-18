@@ -8,22 +8,35 @@ Create a svg by chaining calls corresponding to svg elements
 
 
 ```javascript
-const n = svg(
-        {opts},
-        circle(opts),
-        path(opts),
-        g(
-            {opts}
-            line(opts)
-        )
-    );
+import svgGen, {parseToText} from './src/svg-gen.js';
 
-    writeFile(svg, file);
+const s = new svgGen({});
+const svg = s.svg({}, [
+    s.text({ x: 10, y: 20 }, "Hello, World!"),
+    s.g({}, [
+        s.text({ x: 10, y: 20 }, "A")
+    ]),
+    s.circle({ cx: 50, cy: 50, r: 40 })
+]
+);
+
+console.debug(parseToText(svg));
 ```
 
-For each node type X, there is a function `X` with:
-* First optional arg if it's an object that not a SVG node, then it's the attributes of X
-* Following arguments are nodes appended as children
-* If it's a function, call the function with a context passed as part of the first `svg()`
+yields
+
+```
+<svg width="100" height="100" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+  <text x="10" y="20">
+    Hello, World!
+  </text>
+  <g>
+    <text x="10" y="20">
+      A
+    </text>
+  </g>
+  <circle cx="50" cy="50" r="40"/>
+</svg>
+```
 
 

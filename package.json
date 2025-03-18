@@ -5,7 +5,7 @@
     "description": "A tool for generating SVG files",
     "main": "index.js",
     "scripts": {
-        "test": "echo \"Error: no test specified\" && exit 1"
+        "test": "vitest"
     },
     "repository": {
         "type": "git",
@@ -21,7 +21,7 @@
         "url": "https://github.com/mlitwin/svg-gen/issues"
     },
     "homepage": "https://github.com/mlitwin/svg-gen#readme",
-    "dependencies": {
-        "js-beautify": "^1.15.4"
+    "devDependencies": {
+        "vitest": "^3.0.9"
     }
 }
