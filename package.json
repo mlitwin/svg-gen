@@ -20,5 +20,8 @@
     "bugs": {
         "url": "https://github.com/mlitwin/svg-gen/issues"
     },
-    "homepage": "https://github.com/mlitwin/svg-gen#readme"
+    "homepage": "https://github.com/mlitwin/svg-gen#readme",
+    "dependencies": {
+        "js-beautify": "^1.15.4"
+    }
 }
