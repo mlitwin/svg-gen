@@ -1,11 +1,8 @@
 # svg-gen
 
-Javascript SVG Generation. At this points just notes for what I want.
+Javascript SVG Generation. At this points pretty bare-bones as I figure out what I want.
 
-## Sketch of what it will be
-
-Create a svg by chaining calls corresponding to svg elements
-
+## Usage
 
 ```javascript
 import svgGen, {parseToText} from './src/svg-gen.js';
