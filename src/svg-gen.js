@@ -2,6 +2,21 @@
 
 // https://developer.mozilla.org/en-US/docs/Web/SVG/Element
 
+const allElementsOptions = [
+    { name: "transform" },
+    { name: "id" },
+    { name: "xml:base" },
+    { name: "xml:lang" },
+    { name: "xml:space" },
+    { name: "class" },
+    { name: "style" },
+    { name: "tabindex" },
+    { name: "focusable" },
+    { name: "requiredExtensions" },
+    { name: "requiredFeatures" },
+    { name: "systemLanguage" },
+    { name: "externalResourcesRequired" }
+];
 
 const svgTypes = {
     svg: {
@@ -362,6 +377,7 @@ function node(type, spec, options, children) {
  
     const optionsList = [];
     const allOptions = spec.options || [];
+    allOptions.push(...allElementsOptions);
     allOptions.forEach(opt => {
         if (opt.default || opt.name in options) {
             optionsList.push({
@@ -380,7 +396,6 @@ function node(type, spec, options, children) {
 
 function svgGen(options) {
     this.options = options || {};
-    this.options.processor = this.options.processor || textProcessor;
     Object.keys(svgTypes).forEach(type => {
         this[type] = function (opts, children) {
             return new node(type, svgTypes[type], opts, children);
