@@ -379,10 +379,11 @@ function node(type, spec, options, children) {
     const allOptions = spec.options || [];
     allOptions.push(...allElementsOptions);
     allOptions.forEach(opt => {
-        if (opt.default || opt.name in options) {
+        const haveOptVal = opt.name in options;
+        if (opt.default || haveOptVal) {
             optionsList.push({
                 name: opt.name,
-                default: options[opt.name] || opt.default
+                value: haveOptVal ? options[opt.name] : opt.default
             });
         }
     });
@@ -415,7 +416,7 @@ function textProcessor(depth, node) {
     function open(n) {
         return [`<${n.type}`,
             ...n.optionsList.map(opt => {
-                return `${opt.name}="${opt.default}"`;
+                return `${opt.name}="${opt.value}"`;
             })].join(" ");
     }
 
