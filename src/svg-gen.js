@@ -15,7 +15,10 @@ const allElementsOptions = [
     { name: "requiredExtensions" },
     { name: "requiredFeatures" },
     { name: "systemLanguage" },
-    { name: "externalResourcesRequired" }
+    { name: "externalResourcesRequired" },
+    { name: "fill" },
+    { name: "stroke" },
+    { name: "stroke-width" },
 ];
 
 const svgTypes = {
@@ -340,6 +343,14 @@ const svgTypes = {
             { name: "r" }
         ]
     },
+    ellipse: {
+        options: [
+            { name: "cx" },
+            { name: "cy" },
+            { name: "rx" },
+            { name: "ry" }
+        ]
+    },
     rect: {
         options: [
             { name: "x" },
@@ -370,14 +381,13 @@ function node(type, spec, options, children) {
     this.type = type;
     this.children = children;
 
-    if(this.children && !Array.isArray(this.children)) {
+    if (this.children && !Array.isArray(this.children)) {
         this.children = [this.children];
     }
 
- 
     const optionsList = [];
-    const allOptions = spec.options || [];
-    allOptions.push(...allElementsOptions);
+    const specOptions = spec.options || [];
+    const allOptions = [...specOptions, ...allElementsOptions];
     allOptions.forEach(opt => {
         const haveOptVal = opt.name in options;
         if (opt.default || haveOptVal) {
