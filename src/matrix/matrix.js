@@ -1,3 +1,20 @@
+/**
+ * Represents a Matrix and provides functionality to initialize it.
+ * 
+ * @class Matrix
+ * @param {number|string} m - If a string, it represents a matrix in textual form 
+ *                            where rows are separated by newlines and values by spaces. 
+ *                            If a number, it represents the number of rows in the matrix.
+ * @param {number} [n] - The number of columns in the matrix. Required if `m` is a number.
+ * 
+ * @example
+ * // Initialize a matrix from a string
+ * const matrix = new Matrix("1 2 3\n4 5 6\n7 8 9");
+ * 
+ * @example
+ * // Initialize a zero matrix with 3 rows and 4 columns
+ * const matrix = new Matrix(3, 4);
+ */
 function Matrix(m, n) {
     if (typeof m === 'string') {
 
@@ -69,6 +86,9 @@ Matrix.prototype.Mult = function (b) {
 }
 
 Matrix.prototype.Identity = function (n) {
+    if (n === undefined) {
+        n = this.m;
+    }
     let ret = new Matrix(n, n);
     ret.eachRow((r, i) => {
         r[i] = 1;
@@ -98,6 +118,70 @@ Matrix.prototype.Pow = function (n) {
     return m2.Mult(m2).Mult(this);
 }
 
+/**
+ * Rotates the matrix around a specified axis by a given angle.
+ * 
+ * @param {string|number|array} axes - The axis of rotation. Can be a string ('x', 'y', 'z'), 
+ *                                     a number (0, 1, 2 corresponding to x, y, z respectively),
+ *                                     or an array of two numbers representing the two axes 
+ *                                     that define the plane of rotation.
+ * @param {number} angle - The angle of rotation in radians.
+ * @returns {Matrix} A new matrix resulting from the rotation transformation.
+ */
+Matrix.prototype.Translate = function (dv) {
+    const m = this.m;
+    const n = this.n;
+    const transform = this.Identity(m);
+    for(let i = 0; i < dv.length; i++) {
+        transform[i][n-1] = dv[i];
+    }
+    return this.Mult(transform);
+}
+
+const axesMap = {
+    x: 0,
+    y: 1,
+    z: 2
+};
+
+Matrix.prototype.Rotate = function (axes, angle) {
+    if(typeof axes === 'string') {
+        axes = axesMap[axes.toLowerCase()];
+    }
+    if(typeof axes === 'number') {
+        axes = [0, 1, 2].filter(i => i !== axes); 
+    }
+    const transform = this.Identity();
+    const c = Math.cos(angle);
+    const s = Math.sin(angle);
+
+    transform[axes[0]][axes[0]] = c;
+    transform[axes[0]][axes[1]] = -s;
+    transform[axes[1]][axes[0]] = s;
+    transform[axes[1]][axes[1]] = c;
+   
+    return this.Mult(transform);
+}
+
+/*
+* Computes the Singular Value Decomposition (SVD) of the matrix.
+* The SVD decomposes the matrix into three components: U, S, and V, 
+* where the original matrix can be represented as U * S * V^T.
+* 
+* @method SVD
+* @memberof Matrix
+* @returns {Object} An object containing the following properties:
+* - `U` {Matrix}: The left singular vectors as a matrix.
+* - `S` {Array<number>}: The singular values as a diagonal array.
+* - `V` {Matrix}: The right singular vectors as a matrix.
+* 
+* @example
+* const matrix = new Matrix("1 2 3\n4 5 6\n7 8 9");
+* const { U, S, V } = matrix.SVD();
+* console.log("U:", U);
+* console.log("S:", S);
+* console.log("V:", V);
+*/
 Matrix.prototype.SVD = function () {
     const eps = 1e-10; // Convergence threshold
     const maxIterations = 100; // Maximum number of iterations

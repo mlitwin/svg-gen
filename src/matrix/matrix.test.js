@@ -78,4 +78,14 @@ describe('Matrix', () => {
         expect(V.length).toBe(3); // V should have 3 rows
         expect(S.length).toBe(2); // Singular values should match the smaller dimension
     });
+
+    it('should rotate the matrix around a specified axis', () => {
+        const matrix = new Matrix("1 0 0\n0 1 0\n0 0 1");
+        const rotated = matrix.Rotate('z', Math.PI / 2);
+        expect(rotated[0][0]).toBeCloseTo(0);
+        expect(rotated[0][1]).toBeCloseTo(-1);
+        expect(rotated[1][0]).toBeCloseTo(1);
+        expect(rotated[1][1]).toBeCloseTo(0);
+        expect(rotated[2][2]).toBeCloseTo(1);
+    });
 });
