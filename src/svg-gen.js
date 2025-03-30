@@ -417,33 +417,32 @@ function svgGen(options) {
 }
 
 function textProcessor(depth, node) {
-    const spacing= ' '.repeat(depth * 2);
+    const spacing = ' '.repeat(depth * 2);
 
-    if(typeof node === "string") {
+    if (typeof node === "string") {
         return spacing + node + '\n';
     }
 
     function open(n) {
         return [`<${n.type}`,
-            ...n.optionsList.map(opt => {
-                return `${opt.name}="${opt.value}"`;
-            })].join(" ");
+        ...n.optionsList.map(opt => {
+            return `${opt.name}="${opt.value}"`;
+        })].join(" ");
     }
-
 
     let text = spacing
     text += open(node);
 
-    if(node.children) {
+    if (node.children) {
         text += '>\n';
         node.children.forEach(child => {
             text += textProcessor(depth + 1, child);
         });
-        text += spacing+ `</${node.type}>`;
+        text += spacing + `</${node.type}>`;
     } else {
         text += `/>`;
     }
-    if(depth > 0) {
+    if (depth > 0) {
         text += '\n';
     }
 

@@ -45,8 +45,19 @@ describe('Matrix', () => {
         expect(result[1]).toEqual([10, 8]);
     });
 
+    it('should multiply a matrix and a vector', () => {
+        const a = new Matrix("1 2\n3 4");
+        const b = [2, 0];
+        a.print()
+        const result = a.Mult(b);
+        expect(result).toEqual([2, 6]);
+
+    });
+
+
+
     it('should create an identity matrix', () => {
-        const identity = Matrix.prototype.Identity(3);
+        const identity = Matrix.Identity(3);
         expect(identity[0]).toEqual([1, 0, 0]);
         expect(identity[1]).toEqual([0, 1, 0]);
         expect(identity[2]).toEqual([0, 0, 1]);
@@ -81,11 +92,56 @@ describe('Matrix', () => {
 
     it('should rotate the matrix around a specified axis', () => {
         const matrix = new Matrix("1 0 0\n0 1 0\n0 0 1");
-        const rotated = matrix.Rotate('z', Math.PI / 2);
+        const rotated = matrix.Rotate({ axes: 'z', angle: Math.PI / 2 });
         expect(rotated[0][0]).toBeCloseTo(0);
         expect(rotated[0][1]).toBeCloseTo(-1);
         expect(rotated[1][0]).toBeCloseTo(1);
         expect(rotated[1][1]).toBeCloseTo(0);
         expect(rotated[2][2]).toBeCloseTo(1);
+    });
+
+    it('should apply a series of transformations', () => {
+        const matrix = new Matrix("1 0 0 0\n0 1 0 0\n0 0 1 0\n0 0 0 1");
+        const dz = 5;
+        const transformed = matrix.Transform([
+            { op: "Rotate", args: { axes: "z", angle: Math.PI / 2 } },
+            { op: "Translate", args: { vec: [0, 0, -dz] } }
+        ]);
+
+        // Check rotation
+        expect(transformed[0][0]).toBeCloseTo(0);
+        expect(transformed[0][1]).toBeCloseTo(-1);
+        expect(transformed[1][0]).toBeCloseTo(1);
+        expect(transformed[1][1]).toBeCloseTo(0);
+
+        // Check translation
+        expect(transformed[2][3]).toBeCloseTo(-dz);
+        expect(transformed[3][3]).toBeCloseTo(1);
+    });
+
+    it('should solve a linear equation using SVD', () => {
+        const A = new Matrix("4 2 1\n2 5 3\n1 3 6"); // Non-singular matrix
+        const B = [1, 2, 3];
+        const svd = A.SVD();
+        const X = Matrix.SVDSolve(svd, B);
+
+        // Verify the solution satisfies A * X = B
+        const result = A.Mult(X);
+        expect(result[0]).toBeCloseTo(B[0], 3);
+        expect(result[1]).toBeCloseTo(B[1], 3);
+        expect(result[2]).toBeCloseTo(B[2], 3);
+    });
+
+    it('should solve an overdetermined linear equation using SVD', () => {
+        const A = new Matrix("4 2 1 4\n2 5 3 2\n1 3 6 1");
+        const B = [1, 2, 3];
+        const svd = A.SVD();
+        const X = Matrix.SVDSolve(svd, B);
+
+        // Verify the solution satisfies A * X = B
+        const result = A.Mult(X);
+        expect(result[0]).toBeCloseTo(B[0], 3);
+        expect(result[1]).toBeCloseTo(B[1], 3);
+        expect(result[2]).toBeCloseTo(B[2], 3);
     });
 });

@@ -31,6 +31,14 @@ function Matrix(m, n) {
         this.n = this[0].length;
         return;
     }
+    if (Array.isArray(m)) {
+        m.forEach(row => {
+            this.push(row.slice());
+        });
+        this.m = m.length;
+        this.n = m[0].length;
+        return;
+    }
     this.m = m;
     this.n = n;
     for (let j = 0; j < m; j++) {
@@ -71,7 +79,48 @@ Matrix.prototype.transform = function (vec) {
     return ret;
 }
 
+function MultMatrixVector(M, v) {
+    if (M.n !== v.length) {
+        throw new Error("Matrix columns must match vector length.");
+    }
+    const result = new Array(M.m).fill(0);
+    for (let i = 0; i < M.m; i++) {
+        for (let j = 0; j < M.n; j++) {
+            result[i] += M[i][j] * v[j];
+        }
+    }
+    return result;
+}
+
+/* Multiplies the current matrix with another matrix or a vector.
+ * 
+ * If the input is a matrix, it performs matrix multiplication. If the input is a vector,
+ * it performs matrix-vector multiplication.
+ * 
+ * @method Mult
+ * @memberof Matrix
+ * @param {Matrix|Array<number>} b - The matrix or vector to multiply with.
+ * @returns {Matrix|Array<number>} The resulting matrix or vector after multiplication.
+ * @throws {Error} If the dimensions of the matrix and vector do not align for multiplication.
+ * 
+ * @example
+ * // Matrix multiplication
+ * const A = new Matrix("1 2\n3 4");
+ * const B = new Matrix("5 6\n7 8");
+ * const result = A.Mult(B);
+ * console.log(result);
+ * 
+ * @example
+ * // Matrix-vector multiplication
+ * const A = new Matrix("1 2\n3 4");
+ * const v = [1, 2];
+ * const result = A.Mult(v);
+ * console.log(result);
+ */
 Matrix.prototype.Mult = function (b) {
+    if (!(b instanceof Matrix)) {
+        return MultMatrixVector(this, b);
+    }
     const m = this.m;
     const n = this.n; // === b.m
     const p = b.n;
@@ -85,16 +134,28 @@ Matrix.prototype.Mult = function (b) {
     return ret;
 }
 
-Matrix.prototype.Identity = function (n) {
-    if (n === undefined) {
-        n = this.m;
-    }
-    let ret = new Matrix(n, n);
+Matrix.Identity = function (n) {
+    const ret = new Matrix(n, n);
     ret.eachRow((r, i) => {
         r[i] = 1;
     });
 
     return ret;
+}
+Matrix.prototype.Identity = function (n){
+    if (n === undefined) {
+        n = this.m;
+    }
+    return Matrix.Identity(n);
+}
+Matrix.prototype.Transpose = function () {
+    const transposed = new Matrix(this.n, this.m);
+    for (let i = 0; i < this.m; i++) {
+        for (let j = 0; j < this.n; j++) {
+            transposed[j][i] = this[i][j];
+        }
+    }
+    return transposed;
 }
 
 Matrix.prototype.DiagonalArray = function () {
@@ -118,22 +179,14 @@ Matrix.prototype.Pow = function (n) {
     return m2.Mult(m2).Mult(this);
 }
 
-/**
- * Rotates the matrix around a specified axis by a given angle.
- * 
- * @param {string|number|array} axes - The axis of rotation. Can be a string ('x', 'y', 'z'), 
- *                                     a number (0, 1, 2 corresponding to x, y, z respectively),
- *                                     or an array of two numbers representing the two axes 
- *                                     that define the plane of rotation.
- * @param {number} angle - The angle of rotation in radians.
- * @returns {Matrix} A new matrix resulting from the rotation transformation.
- */
-Matrix.prototype.Translate = function (dv) {
+
+Matrix.prototype.Translate = function (opts) {
+    const vec = opts.vec;
     const m = this.m;
     const n = this.n;
-    const transform = this.Identity(m);
-    for(let i = 0; i < dv.length; i++) {
-        transform[i][n-1] = dv[i];
+    const transform = Matrix.Identity(m);
+    for(let i = 0; i < vec.length; i++) {
+        transform[i][n-1] = vec[i];
     }
     return this.Mult(transform);
 }
@@ -144,7 +197,20 @@ const axesMap = {
     z: 2
 };
 
-Matrix.prototype.Rotate = function (axes, angle) {
+/**
+ * Rotates the matrix around a specified axis by a given angle.
+ * 
+ * @param {string|number|array} axes - The axis of rotation. Can be a string ('x', 'y', 'z'), 
+ *                                     a number (0, 1, 2 corresponding to x, y, z respectively),
+ *                                     or an array of two numbers representing the two axes 
+ *                                     that define the plane of rotation.
+ * @param {number} angle - The angle of rotation in radians.
+ * @returns {Matrix} A new matrix resulting from the rotation transformation.
+ */
+Matrix.prototype.Rotate = function (opts) {
+    let axes = opts.axes;
+    const angle = opts.angle;
+
     if(typeof axes === 'string') {
         axes = axesMap[axes.toLowerCase()];
     }
@@ -154,6 +220,7 @@ Matrix.prototype.Rotate = function (axes, angle) {
     const transform = this.Identity();
     const c = Math.cos(angle);
     const s = Math.sin(angle);
+
 
     transform[axes[0]][axes[0]] = c;
     transform[axes[0]][axes[1]] = -s;
@@ -259,6 +326,65 @@ Matrix.prototype.SVD = function () {
 
     // Return U, S, and V matrices
     return { U, S: S.DiagonalArray(), V };
+}
+
+/**
+ * Solves the linear equation A * X = B using the Singular Value Decomposition (SVD).
+ * 
+ * Given the SVD decomposition of matrix A as U, S, and V (where A = U * S * V^T),
+ * this method computes the solution vector X for the equation A * X = B.
+ * 
+ * @method SVDSolve
+ * @memberof Matrix
+ * @static
+ * @param {Object} svd - The SVD decomposition of matrix A, as returned by `Matrix.prototype.SVD`.
+ * @param {Matrix|Array<number>} B - The right-hand side of the equation A * X = B. Can be a matrix or an array.
+ * @returns {Array<number>} The solution vector X that satisfies A * X = B.
+ * 
+ * @example
+ * const A = new Matrix("1 2 3\n4 5 6\n7 8 9");
+ * const B = [1, 0, 0];
+ * const svd = A.SVD();
+ * const X = Matrix.SVDSolve(svd, B);
+ * console.log("Solution X:", X);
+ */
+Matrix.SVDSolve = function(svd, B) {
+    const { U, S, V } = svd;
+
+    // Compute U^T * B
+    const UTB = U.Transpose().Mult(B);
+    // Solve for Y in S * Y = U^T * B
+    const Y = new Array(S.length).fill(0);
+    for (let i = 0; i < S.length; i++) {
+        if (Math.abs(S[i]) > 1e-10) { // Avoid division by zero
+            Y[i] = UTB[i] / S[i];
+        }
+    }
+
+    // Solve for X in V * X = Y
+    const X = new Array(V.n).fill(0);
+    for (let i = 0; i < V.n; i++) {
+        for (let j = 0; j < S.length; j++) {
+            X[i] += V[i][j] * Y[j];
+        }
+    }
+
+    return X;
+}
+
+Matrix.prototype.Transform = function(transformation) {
+    let result = this;
+    transformation.forEach(t => {
+        switch(t.op) {
+            case "Rotate":
+                result = result.Rotate(t.args);
+                break;
+            case "Translate":
+                result = result.Translate(t.args);
+                break;
+        }
+    });
+    return result;
 }
 
 export { Matrix };
