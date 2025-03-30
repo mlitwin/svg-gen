@@ -13,7 +13,6 @@ describe('svgGen', () => {
         ]);
 
         const result = parseToText(svg);
-        console.debug(result);
         expect(result).toContain('Hello, World!');
         expect(result).toContain('A');
         expect(result).toContain('<circle cx="50" cy="50" r="40"/>');
@@ -35,7 +34,6 @@ describe('svgGen', () => {
         ]);
 
         const result = parseToText(svg);
-        console.debug(result);
         expect(result).toContain('<rect x="10" y="10" width="100" height="50"/>');
     });
 
@@ -50,7 +48,6 @@ describe('svgGen', () => {
         ]);
 
         const result = parseToText(svg);
-        console.debug(result);
         expect(result).toContain('Nested');
     });
 });

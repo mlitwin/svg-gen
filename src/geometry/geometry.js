@@ -6,7 +6,7 @@
  * @module geometry
  */
 
-import {Matrix} from '../matrix/matrix.js';
+import { Matrix } from '../matrix/matrix.js';
 
 const Geom = {
     /**
@@ -14,13 +14,15 @@ const Geom = {
      * from an array of points.
      * 
      * @param {Array<{x: number, y: number}>} points - An array of points with x and y coordinates.
-     * @returns {Array<number>} The coefficients of the general ellipse equation [A(x^2), B(y^2), C(xy), D(x), E(y)].
+     * @returns {Object<A: number, B: number, C: number, D: number, E: number>} The coefficients of the general ellipse equation Ax^2  + By^2 + Cxy + Dx + Ey = 1.
      */
     EllipseFromPoints(points) {
         const matrixRows = points.map(({ x, y }) => [x ** 2, y ** 2, x * y, x, y]);
         const matrix = new Matrix(matrixRows);
-        return matrix;
-        // Function implementation will go here
+        matrix.print();
+        const svd = matrix.SVD();
+        const solution = Matrix.SVDSolve(svd, [1, 1, 1, 1, 1]);
+        return { A: solution[0], B: solution[1], C: solution[2], D: solution[3], E: solution[4] };
     },
     /**
      * Projects a set of 3D affine points onto a 2D plane using a projective transformation.

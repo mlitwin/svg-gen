@@ -15,6 +15,8 @@
  * // Initialize a zero matrix with 3 rows and 4 columns
  * const matrix = new Matrix(3, 4);
  */
+
+import SVD from './svd.js';
 function Matrix(m, n) {
     if (typeof m === 'string') {
 
@@ -81,7 +83,7 @@ Matrix.prototype.transform = function (vec) {
 
 function MultMatrixVector(M, v) {
     if (M.n !== v.length) {
-        throw new Error("Matrix columns must match vector length.");
+        throw new Error(`Matrix columns must match vector length expected matrix n = ${M.n} but got ${v.length}`);
     }
     const result = new Array(M.m).fill(0);
     for (let i = 0; i < M.m; i++) {
@@ -142,7 +144,7 @@ Matrix.Identity = function (n) {
 
     return ret;
 }
-Matrix.prototype.Identity = function (n){
+Matrix.prototype.Identity = function (n) {
     if (n === undefined) {
         n = this.m;
     }
@@ -156,6 +158,16 @@ Matrix.prototype.Transpose = function () {
         }
     }
     return transposed;
+}
+
+Matrix.FromDiagonalArray = function (diagonal) {
+    const ret = new Matrix(diagonal.length, diagonal.length);
+    ret.eachRow((r, i) => {
+        r[i] = diagonal[i];
+    }
+    );
+
+    return ret;
 }
 
 Matrix.prototype.DiagonalArray = function () {
@@ -185,8 +197,8 @@ Matrix.prototype.Translate = function (opts) {
     const m = this.m;
     const n = this.n;
     const transform = Matrix.Identity(m);
-    for(let i = 0; i < vec.length; i++) {
-        transform[i][n-1] = vec[i];
+    for (let i = 0; i < vec.length; i++) {
+        transform[i][n - 1] = vec[i];
     }
     return this.Mult(transform);
 }
@@ -211,11 +223,11 @@ Matrix.prototype.Rotate = function (opts) {
     let axes = opts.axes;
     const angle = opts.angle;
 
-    if(typeof axes === 'string') {
+    if (typeof axes === 'string') {
         axes = axesMap[axes.toLowerCase()];
     }
-    if(typeof axes === 'number') {
-        axes = [0, 1, 2].filter(i => i !== axes); 
+    if (typeof axes === 'number') {
+        axes = [0, 1, 2].filter(i => i !== axes);
     }
     const transform = this.Identity();
     const c = Math.cos(angle);
@@ -226,7 +238,7 @@ Matrix.prototype.Rotate = function (opts) {
     transform[axes[0]][axes[1]] = -s;
     transform[axes[1]][axes[0]] = s;
     transform[axes[1]][axes[1]] = c;
-   
+
     return this.Mult(transform);
 }
 
@@ -239,7 +251,7 @@ Matrix.prototype.Rotate = function (opts) {
 * @memberof Matrix
 * @returns {Object} An object containing the following properties:
 * - `U` {Matrix}: The left singular vectors as a matrix.
-* - `S` {Array<number>}: The singular values as a diagonal array.
+* - `S` {Matrix}: The singular values as a rectangular diagonal matrix.
 * - `V` {Matrix}: The right singular vectors as a matrix.
 * 
 * @example
@@ -255,77 +267,11 @@ Matrix.prototype.SVD = function () {
 
     const m = this.m;
     const n = this.n;
+    console.log(m, n);
 
-    // Initialize U, S, and V matrices
-    let U = this.Identity(m);
-    let S = new Matrix(m, n);
-    let V = this.Identity(n);
+    const { q, u, v } = SVD(this);
 
-    // Copy this matrix into S
-    for (let i = 0; i < m; i++) {
-        for (let j = 0; j < n; j++) {
-            S[i][j] = this[i][j];
-        }
-    }
-
-    // Jacobi method for SVD
-    for (let iter = 0; iter < maxIterations; iter++) {
-        let maxOffDiagonal = 0;
-        let p = 0, q = 0;
-
-        // Find the largest off-diagonal element in S
-        for (let i = 0; i < n; i++) {
-            for (let j = i + 1; j < m; j++) {
-                if (Math.abs(S[i][j]) > maxOffDiagonal) {
-                    maxOffDiagonal = Math.abs(S[i][j]);
-                    p = i;
-                    q = j;
-                }
-            }
-        }
-
-        // Check for convergence
-        if (maxOffDiagonal < eps) break;
-
-        // Compute Jacobi rotation
-        const theta = 0.5 * Math.atan2(2 * S[p][q], S[q][q] - S[p][p]);
-        const cos = Math.cos(theta);
-        const sin = Math.sin(theta);
-
-        // Update S matrix
-        for (let i = 0; i < m; i++) {
-            const Sp = cos * S[i][p] - sin * S[i][q];
-            const Sq = sin * S[i][p] + cos * S[i][q];
-            S[i][p] = Sp;
-            S[i][q] = Sq;
-        }
-
-        for (let i = 0; i < n; i++) {
-            const Sp = cos * S[p][i] - sin * S[q][i];
-            const Sq = sin * S[p][i] + cos * S[q][i];
-            S[p][i] = Sp;
-            S[q][i] = Sq;
-        }
-
-        // Update U matrix
-        for (let i = 0; i < m; i++) {
-            const Up = cos * U[i][p] - sin * U[i][q];
-            const Uq = sin * U[i][p] + cos * U[i][q];
-            U[i][p] = Up;
-            U[i][q] = Uq;
-        }
-
-        // Update V matrix
-        for (let i = 0; i < n; i++) {
-            const Vp = cos * V[i][p] - sin * V[i][q];
-            const Vq = sin * V[i][p] + cos * V[i][q];
-            V[i][p] = Vp;
-            V[i][q] = Vq;
-        }
-    }
-
-    // Return U, S, and V matrices
-    return { U, S: S.DiagonalArray(), V };
+    return { U: new Matrix(u), S: Matrix.FromDiagonalArray(q), V: new Matrix(v) };
 }
 
 /**
@@ -338,7 +284,7 @@ Matrix.prototype.SVD = function () {
  * @memberof Matrix
  * @static
  * @param {Object} svd - The SVD decomposition of matrix A, as returned by `Matrix.prototype.SVD`.
- * @param {Matrix|Array<number>} B - The right-hand side of the equation A * X = B. Can be a matrix or an array.
+ * @param {Array<number>} B - The right-hand side of the equation A * X = B
  * @returns {Array<number>} The solution vector X that satisfies A * X = B.
  * 
  * @example
@@ -348,34 +294,24 @@ Matrix.prototype.SVD = function () {
  * const X = Matrix.SVDSolve(svd, B);
  * console.log("Solution X:", X);
  */
-Matrix.SVDSolve = function(svd, B) {
+Matrix.SVDSolve = function (svd, B) {
     const { U, S, V } = svd;
 
-    // Compute U^T * B
-    const UTB = U.Transpose().Mult(B);
-    // Solve for Y in S * Y = U^T * B
-    const Y = new Array(S.length).fill(0);
-    for (let i = 0; i < S.length; i++) {
-        if (Math.abs(S[i]) > 1e-10) { // Avoid division by zero
-            Y[i] = UTB[i] / S[i];
+    // Ensure S is treated as a rectangular diagonal matrix
+    const minDim = Math.min(S.m, S.n);
+    const S_inv = new Matrix(S.n, S.m); // Transpose dimensions for pseudo-inverse
+    for (let i = 0; i < minDim; i++) {
+        if (Math.abs(S[i][i]) > 1e-10) { // Avoid division by zero
+            S_inv[i][i] = 1 / S[i][i];
         }
     }
+    return V.Mult(S_inv).Mult(U.Transpose()).Mult(B);
+};
 
-    // Solve for X in V * X = Y
-    const X = new Array(V.n).fill(0);
-    for (let i = 0; i < V.n; i++) {
-        for (let j = 0; j < S.length; j++) {
-            X[i] += V[i][j] * Y[j];
-        }
-    }
-
-    return X;
-}
-
-Matrix.prototype.Transform = function(transformation) {
+Matrix.prototype.Transform = function (transformation) {
     let result = this;
     transformation.forEach(t => {
-        switch(t.op) {
+        switch (t.op) {
             case "Rotate":
                 result = result.Rotate(t.args);
                 break;

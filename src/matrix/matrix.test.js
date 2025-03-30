@@ -1,5 +1,128 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, beforeAll } from 'vitest';
 import { Matrix } from './matrix.js';
+
+// Add custom matchers
+
+function toBeCloseToMatrix(received, expected, precision = 2) {
+    if (!(received instanceof Matrix) || !(expected instanceof Matrix)) {
+        return {
+            pass: false,
+            message: () => `Expected both arguments to be instances of Matrix.`,
+        };
+    }
+    if (received.m !== expected.m || received.n !== expected.n) {
+        return {
+            pass: false,
+            message: () => `Matrix dimensions do not match. Received (${received.m}, ${received.n}), expected (${expected.m}, ${expected.n}).`,
+        };
+    }
+    for (let i = 0; i < received.m; i++) {
+        for (let j = 0; j < received.n; j++) {
+            if (Math.abs(received[i][j] - expected[i][j]) > Math.pow(10, -precision)) {
+                return {
+                    pass: false,
+                    message: () =>
+                        `Matrix values differ at (${i}, ${j}). Received ${received[i][j]}, expected ${expected[i][j]} within precision ${precision}.`,
+                };
+            }
+        }
+    }
+    return {
+        pass: true,
+        message: () => `Matrices are close to each other within precision ${precision}.`,
+    };
+}
+
+beforeAll(() => {
+    expect.extend({
+
+        toBeSVD(received) {
+            const {U, S, V} = received;
+            if (!U || !S || !V) {
+                return {
+                    pass: false,
+                    message: () => `Expected received to be a valid SVD object with U, S, and V matrices.`,
+                };
+            }
+    
+            const isSRectangularDiagonal = S.every((row, i) =>
+                row.every((value, j) => (i === j ? value >= 0 : value === 0))
+            );
+            if (!isSRectangularDiagonal) {
+                return {
+                    pass: false,
+                    message: () => `Matrix S is not a valid rectangular diagonal matrix.`,
+                };
+            }
+            return {
+                pass: true,
+                message: () => `Received is a valid SVD object.`,
+            };
+         },
+
+        toBeCloseToSVDFor(received, expected, precision = 2) {
+            if (!received || !received.U || !received.S || !received.V) {
+                return {
+                    pass: false,
+                    message: () => `Expected received to be a valid SVD object with U, S, and V matrices.`,
+                };
+            }
+            if (!(expected instanceof Matrix)) {
+                return {
+                    pass: false,
+                    message: () => `Expected argument should be an instance of Matrix.`,
+                };
+            }
+
+            const { U, S, V } = received;
+            const reconstructed = U.Mult(S).Mult(V.Transpose());
+            if (!toBeCloseToMatrix(reconstructed, expected, precision).pass) {
+                return {
+                    pass: false,
+                    message: () => `SVD reconstruction differs from the expected matrix.`,
+                };
+            }
+
+            return {
+                pass: true,
+                message: `SVD reconstruction is close to the expected matrix within precision ${precision}.`
+            };
+        },
+
+        toBeCloseToMatrix(received, expected, precision = 2) {
+           return toBeCloseToMatrix(received, expected, precision);
+        },
+
+        toBeCloseToArray(received, expected, precision = 2) {
+            if (!Array.isArray(received) || !Array.isArray(expected)) {
+                return {
+                    pass: false,
+                    message: () => `Expected both arguments to be arrays.`,
+                };
+            }
+            if (received.length !== expected.length) {
+                return {
+                    pass: false,
+                    message: () => `Array lengths do not match. Received length ${received.length}, expected length ${expected.length}.`,
+                };
+            }
+            for (let i = 0; i < received.length; i++) {
+                if (Math.abs(received[i] - expected[i]) > Math.pow(10, -precision)) {
+                    return {
+                        pass: false,
+                        message: () =>
+                            `Array values differ at index ${i}. Received ${received[i]}, expected ${expected[i]} within precision ${precision}.`,
+                    };
+                }
+            }
+            return {
+                pass: true,
+                message: () => `Arrays are close to each other within precision ${precision}.`,
+            };
+        },
+    });
+});
+
 describe('Matrix', () => {
     it('should create a matrix from dimensions', () => {
         const matrix = new Matrix(2, 3);
@@ -48,7 +171,6 @@ describe('Matrix', () => {
     it('should multiply a matrix and a vector', () => {
         const a = new Matrix("1 2\n3 4");
         const b = [2, 0];
-        a.print()
         const result = a.Mult(b);
         expect(result).toEqual([2, 6]);
 
@@ -68,26 +190,6 @@ describe('Matrix', () => {
         const result = matrix.Pow(2);
         expect(result[0]).toEqual([2, 1]);
         expect(result[1]).toEqual([1, 1]);
-    });
-
-    it('should compute the Singular Value Decomposition (SVD)', () => {
-        const matrix = new Matrix("1 0 0\n0 1 0\n0 0 1");
-        const { U, S, V } = matrix.SVD();
-        expect(U[0]).toEqual([1, 0, 0]);
-        expect(U[1]).toEqual([0, 1, 0]);
-        expect(U[2]).toEqual([0, 0, 1]);
-        expect(S).toEqual([1, 1, 1]);
-        expect(V[0]).toEqual([1, 0, 0]);
-        expect(V[1]).toEqual([0, 1, 0]);
-        expect(V[2]).toEqual([0, 0, 1]);
-    });
-
-    it('should compute the SVD for a non-square matrix', () => {
-        const matrix = new Matrix("1 2 3\n4 5 6");
-        const { U, S, V } = matrix.SVD();
-        expect(U.length).toBe(2); // U should have 2 rows
-        expect(V.length).toBe(3); // V should have 3 rows
-        expect(S.length).toBe(2); // Singular values should match the smaller dimension
     });
 
     it('should rotate the matrix around a specified axis', () => {
@@ -119,29 +221,81 @@ describe('Matrix', () => {
         expect(transformed[3][3]).toBeCloseTo(1);
     });
 
-    it('should solve a linear equation using SVD', () => {
-        const A = new Matrix("4 2 1\n2 5 3\n1 3 6"); // Non-singular matrix
-        const B = [1, 2, 3];
-        const svd = A.SVD();
-        const X = Matrix.SVDSolve(svd, B);
 
-        // Verify the solution satisfies A * X = B
-        const result = A.Mult(X);
-        expect(result[0]).toBeCloseTo(B[0], 3);
-        expect(result[1]).toBeCloseTo(B[1], 3);
-        expect(result[2]).toBeCloseTo(B[2], 3);
+    it('should compute the Singular Value Decomposition (SVD)', () => {
+        const A = new Matrix("1 0 0\n0 1 0\n0 0 1");
+        const svd = A.SVD();
+
+        expect(svd).toBeSVD();
+        expect(svd).toBeCloseToSVDFor(A, 3);
+
+    
     });
 
-    it('should solve an overdetermined linear equation using SVD', () => {
-        const A = new Matrix("4 2 1 4\n2 5 3 2\n1 3 6 1");
+ 
+    it('should compute the SVD for a non-square matrix', () => {
+        const A = new Matrix("1 2 3\n4 5 6\n4 7 6 \n4 5 22");
+        const svd = A.SVD();
+
+        expect(svd).toBeSVD();
+        expect(svd).toBeCloseToSVDFor(A, 3);
+    });
+
+
+      
+
+
+
+    it('should solve a linear equation using SVD', () => {
+        const A = new Matrix("4 2 1\n2 5 3\n1 3 6"); 
         const B = [1, 2, 3];
         const svd = A.SVD();
+        expect(svd).toBeSVD();
+        expect(svd).toBeCloseToSVDFor(A, 3);
+
         const X = Matrix.SVDSolve(svd, B);
 
         // Verify the solution satisfies A * X = B
         const result = A.Mult(X);
-        expect(result[0]).toBeCloseTo(B[0], 3);
-        expect(result[1]).toBeCloseTo(B[1], 3);
-        expect(result[2]).toBeCloseTo(B[2], 3);
+        expect(result).toBeCloseToArray(B, 3);
+    });
+
+
+    it('should solve an overdetermined linear equation using SVD', () => {
+        const A = new Matrix("4 2 1\n2 5 3\n1 3 6\n1 3 6\n1 3 6");
+        const B = [1, 1, 1, 1, 1];
+        const svd = A.SVD();
+        expect(svd).toBeSVD();
+        expect(svd).toBeCloseToSVDFor(A, 3);
+        const X = Matrix.SVDSolve(svd, B);
+
+        // Verify the solution satisfies A * X = B
+        const result = A.Mult(X);
+
+        expect(result).toBeCloseToArray(B, 3);
+    });
+
+
+    it('should compute the SVD for a larger matrix', () => {
+        const A = new Matrix("1 4 2 1 2\n4 9 6 2 3\n9 49 21 3 7\n16 100 40 4 10\n25 121 55 5 11");
+        const svd = A.SVD();
+        expect(svd).toBeSVD();
+
+        expect(svd).toBeCloseToSVDFor(A, 3);
+    });
+   
+    
+    it('should compute the SVD for a larger matrix and apply it to a vector', () => {
+        const A = new Matrix("1 4 2 1 2\n4 9 6 2 3\n9 49 21 3 7\n16 100 40 4 10\n25 121 55 5 11");
+        const B = [1, 1, 1, 1, 1];
+        const svd = A.SVD();
+        expect(svd).toBeSVD();
+        expect(svd).toBeCloseToSVDFor(A, 3);
+
+        const X = Matrix.SVDSolve(svd, B);
+        console.log(svd, X, B);
+        const result = A.Mult(X);
+        expect(result).toBeCloseToArray(B, 3);
+
     });
 });
