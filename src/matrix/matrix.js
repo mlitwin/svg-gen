@@ -262,13 +262,6 @@ Matrix.prototype.Rotate = function (opts) {
 * console.log("V:", V);
 */
 Matrix.prototype.SVD = function () {
-    const eps = 1e-10; // Convergence threshold
-    const maxIterations = 100; // Maximum number of iterations
-
-    const m = this.m;
-    const n = this.n;
-    console.log(m, n);
-
     const { q, u, v } = SVD(this);
 
     return { U: new Matrix(u), S: Matrix.FromDiagonalArray(q), V: new Matrix(v) };

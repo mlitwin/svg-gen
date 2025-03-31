@@ -203,22 +203,22 @@ describe('Matrix', () => {
     });
 
     it('should apply a series of transformations', () => {
-        const matrix = new Matrix("1 0 0 0\n0 1 0 0\n0 0 1 0\n0 0 0 1");
-        const dz = 5;
+        const matrix = new Matrix(
+            `1 0 0 0
+             0 1 0 0
+             0 0 1 0
+             0 0 0 1`);
         const transformed = matrix.Transform([
             { op: "Rotate", args: { axes: "z", angle: Math.PI / 2 } },
-            { op: "Translate", args: { vec: [0, 0, -dz] } }
+            { op: "Translate", args: { vec: [0, 0, -5] } }
         ]);
 
-        // Check rotation
-        expect(transformed[0][0]).toBeCloseTo(0);
-        expect(transformed[0][1]).toBeCloseTo(-1);
-        expect(transformed[1][0]).toBeCloseTo(1);
-        expect(transformed[1][1]).toBeCloseTo(0);
-
-        // Check translation
-        expect(transformed[2][3]).toBeCloseTo(-dz);
-        expect(transformed[3][3]).toBeCloseTo(1);
+        const expected = new Matrix(
+           `0 -1 0 0
+            1  0 0 0
+            0  0 1 -5
+            0  0 0 1`);
+        expect(transformed).toBeCloseToMatrix(expected, 3);
     });
 
 
@@ -293,7 +293,6 @@ describe('Matrix', () => {
         expect(svd).toBeCloseToSVDFor(A, 3);
 
         const X = Matrix.SVDSolve(svd, B);
-        console.log(svd, X, B);
         const result = A.Mult(X);
         expect(result).toBeCloseToArray(B, 3);
 
