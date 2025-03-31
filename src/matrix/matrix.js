@@ -316,4 +316,22 @@ Matrix.prototype.Transform = function (transformation) {
     return result;
 }
 
+Matrix.prototype.det = function () {
+    if (this.m !== this.n) {
+        throw new Error("Matrix must be square to compute determinant");
+    }
+    if (this.m === 2) {
+        return this[0][0] * this[1][1] - this[0][1] * this[1][0];
+    }
+    if (this.m === 3) {
+        return this[0][0] * this[1][1] * this[2][2] +
+            this[0][1] * this[1][2] * this[2][0] +
+            this[0][2] * this[1][0] * this[2][1] -
+            this[0][2] * this[1][1] * this[2][0] -
+            this[0][0] * this[1][2] * this[2][1] -
+            this[0][1] * this[1][0] * this[2][2];
+    }
+    throw new Error("Determinant not implemented for matrices larger than 3x3");
+}
+
 export { Matrix };

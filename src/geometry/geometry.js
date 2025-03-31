@@ -47,27 +47,60 @@ const Geom = {
      * @returns {number} return.theta - The rotation angle of the ellipse.
      */
     EllipseStandardForm(coefficients) {
+        // https://en.wikipedia.org/wiki/Conic_section#Conversion_to_canonical_form
         const { A, B, C, D, E } = coefficients;
         const F = -1; // The general conic equation is assumed to be normalized such that F = -1.
 
+        const AQ = new Matrix([
+            [A, B / 2, D / 2],
+            [B / 2, C, E / 2],
+            [D / 2, E / 2, F]
+        ]);
+
+        const A33 = new Matrix([
+            [A, B / 2],
+            [B / 2, C]
+        ]);
+
+        const d0 = B ** 2 - 4 * A * C;
+
+        const b = (A+C);
+        const c = A*C - (B/2)**2;
+    
+        const rad = Math.sqrt(b**2 - 4*c);
+        const l1 = (b + rad)/2;
+        const l2 = (b - rad)/2;
+
+        const x0 = (2 * C * D - B * E) / d0;
+        const y0 = (2 * A * E - B * D) / d0;
+
+        const theta = 0.5 * Math.atan2(-B, C - A);
+
+        const K = - (AQ.det() / A33.det());
+
+        const rx = Math.sqrt(K / l1); 
+        const ry = Math.sqrt(K / l2);
+        /*
         // Calculate the center (x₀, y₀) of the ellipse
         const denominator = B ** 2 - 4 * A * C;
         const x0 = (2 * C * D - B * E) / denominator;
         const y0 = (2 * A * E - B * D) / denominator;
 
         // Calculate the semi-major and semi-minor axes
-        const term0 = -2 * (A * E ** 2 + C * D ** 2 - B * D * E + denominator* F);
+        const term0 = 2 * (A * E ** 2 + C * D ** 2 - B * D * E + denominator* F);
         const term1 = (A + C) + Math.sqrt((A - C) ** 2 + B ** 2);
         const term2 = (A + C) - Math.sqrt((A - C) ** 2 + B ** 2);
-        const a = -Math.sqrt((term0 * term1)) / (denominator);
+        const a = -Math.sqrt(term0 * term1) / (denominator);
+        console.log(term0 * term1);
+        console.log(a, (term0 * term1)/(denominator**2))
         const rx = 1/(a**2)
-       // const rx = (denominator**2)/(term0 * term1);
+        //const rx = (denominator**2)/(term0 * term1);
         const b = -Math.sqrt(term0 * term2) / (denominator);
         const ry = 1/(b**2);
 
         // Calculate the rotation angle (θ)
         const theta = 0.5 * Math.atan2(-B, C - A);
-
+*/
         return { cx: x0, cy: y0, rx, ry, theta };
     },
     /**

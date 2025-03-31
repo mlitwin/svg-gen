@@ -136,20 +136,22 @@ describe('Geom', () => {
         });
         
         it('should compute the standard form of a translated ellipse', () => {
+            // (x-1)^2 + (y-2)^2 - 1 = 0
+            // x^2 + y^2 - 2x - 4y + 4 = 0
             const coefficients = {
-                A: 1,
+                A: 1/-4,
                 B: 0,
-                C: 1,
-                D: -36,
-                E: -72,
+                C: 1/-4,
+                D: -2/-4,
+                E: -4/-4,
             };
             // 
 
             const result = Geom.EllipseStandardForm(coefficients);
 
             expect(result).toBeCloseToObject({
-                    cx: 18,
-                    cy: 36,
+                    cx: 1,
+                    cy: 2,
                     rx: 1,
                     ry: 1,
                     theta: 0,
