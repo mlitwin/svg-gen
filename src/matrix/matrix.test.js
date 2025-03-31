@@ -192,14 +192,22 @@ describe('Matrix', () => {
         expect(result[1]).toEqual([1, 1]);
     });
 
-    it('should rotate the matrix around a specified axis', () => {
+    it('should rotate the matrix around the z axis', () => {
         const matrix = new Matrix("1 0 0\n0 1 0\n0 0 1");
         const rotated = matrix.Rotate({ axes: 'z', angle: Math.PI / 2 });
-        expect(rotated[0][0]).toBeCloseTo(0);
-        expect(rotated[0][1]).toBeCloseTo(-1);
-        expect(rotated[1][0]).toBeCloseTo(1);
-        expect(rotated[1][1]).toBeCloseTo(0);
-        expect(rotated[2][2]).toBeCloseTo(1);
+        const expected = new Matrix("0 -1 0\n1 0 0\n0 0 1");
+        expect(rotated).toBeCloseToMatrix(expected, 3);
+    });
+
+    it('should rotate the matrix around the x axis', () => {
+        const matrix = new Matrix("1 0 0\n0 1 0\n0 0 1");
+        const rotated = matrix.Rotate({ axes: 'x', angle: Math.PI / 2 });
+        const expected = new Matrix([
+            [ 1, 0, 0],
+            [ 0, 0,-1],
+            [ 0, 1, 0]
+    ]);
+        expect(rotated).toBeCloseToMatrix(expected, 3);
     });
 
     it('should apply a series of transformations', () => {
