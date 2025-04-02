@@ -200,7 +200,7 @@ Matrix.prototype.Translate = function (opts) {
     for (let i = 0; i < vec.length; i++) {
         transform[i][n - 1] = vec[i];
     }
-    return this.Mult(transform);
+    return transform.Mult(this);
 }
 
 const axesMap = {
@@ -239,7 +239,7 @@ Matrix.prototype.Rotate = function (opts) {
     transform[axes[1]][axes[0]] = s;
     transform[axes[1]][axes[1]] = c;
 
-    return this.Mult(transform);
+    return transform.Mult(this);
 }
 
 /*

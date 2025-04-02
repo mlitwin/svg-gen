@@ -34,20 +34,6 @@ beforeAll(() => {
     });
 });
 
-function ellipseFromPointsEvaluate(ellipse, points, eye, transform) {
-    const transformed = transform.Mult(points);
-    const projectedPoints = Geom.ProjectiveXYProjection(eye, transformed);
-    const ellipseCoefficients = Geom.EllipseFromPoints(projectedPoints);
-    const { A, B, C, D, E } = ellipseCoefficients;
-
-    // const standardEllipse = Geom.EllipseStandardForm(ellipseCoefficients);
-
-    return projectedPoints.map(({ x, y }) => {
-        const value = A * x ** 2 + B * x * y + C * y ** 2 + D * x + E * y;
-        return value;
-    });
-}
-
 describe('Geom', () => {
     /*
     describe('EllipseFromPoints', () => {

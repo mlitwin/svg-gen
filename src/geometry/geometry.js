@@ -87,13 +87,9 @@ const Geom = {
         const b = (A+C);
         const c = A*C - (B/2)**2;
     
-        /*
-        const rad = Math.sqrt(b**2 - 4*c);
-        const l2 = (b + rad)/2;
-        const l1 = (b - rad)/2;
-        */
-        const [l1, l2] = quadratic(1, -b, c);
 
+        const [l1, l2] = quadratic(1, -b, c);
+        
         const x0 = (2 * C * D - B * E) / d0;
         const y0 = (2 * A * E - B * D) / d0;
 
@@ -107,6 +103,16 @@ const Geom = {
         const ry = Math.sqrt(K / l2);
         
         return { cx: x0, cy: y0, rx, ry, theta };
+    },
+    PointsWithPerspective(points, eye, transform) {
+
+        if (transform.m !== 4 || transform.n !== 4) {
+            throw new Error("Transform matrix must be 4x4.");
+        }
+    
+        const transformed = transform.Mult(points);
+        const perspectivePoints = Geom.ProjectiveXYProjection(eye, transformed);
+        return perspectivePoints;
     },
     /**
      * Generates an ellipse in the xy plane via perspective projection from the given
