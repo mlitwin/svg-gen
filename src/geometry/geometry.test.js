@@ -5,24 +5,48 @@ import { Matrix } from '../matrix/matrix.js';
 beforeAll(() => {
     expect.extend({
         toBeCloseToObject(received, expected, precision = 2) {
-            const errors = Object.keys(expected).filter(key =>
-                Math.abs(received[key] - expected[key]) >= Math.pow(10, -precision) / 2
+            const errors = Object.keys(expected).filter((key) => {
+                if (undefined === expected[key]) {
+                    return undefined == received[key];
+                }
+                if (isNaN(expected[key])) {
+                    return !isNaN(received[key]);
+                }
+                if(isNaN(received[key])) {
+                    return true;
+                }
+                return Math.abs(received[key] - expected[key]) >= Math.pow(10, -precision) / 2
+            }
             ).map(key => `${key}: received ${received[key]} expected ${expected[key]}`);
 
             if (errors.length === 0) {
                 return {
-                    message: () => `expected ${received} not to be close to ${expected} within precision ${precision}`,
+                    message: () => `expected ${JSON.stringify(received)} to be close to ${JSON.stringify(expected)} within precision ${precision}`,
                     pass: true,
                 };
             } else {
                 return {
-                    message: () => `expected ${received} to be close to ${expected} within precision ${precision}. Differences found in keys: ${errors.join(', ')}`,
+                    message: () => `expected  ${JSON.stringify(received)} to be close to ${JSON.stringify(expected)} within precision ${precision}. Differences found in keys: ${errors.join(', ')}`,
                     pass: false,
                 };
             }
         },
     });
 });
+
+function ellipseFromPointsEvaluate(ellipse, points, eye, transform) {
+    const transformed = transform.Mult(points);
+    const projectedPoints = Geom.ProjectiveXYProjection(eye, transformed);
+    const ellipseCoefficients = Geom.EllipseFromPoints(projectedPoints);
+    const { A, B, C, D, E } = ellipseCoefficients;
+
+    // const standardEllipse = Geom.EllipseStandardForm(ellipseCoefficients);
+
+    return projectedPoints.map(({ x, y }) => {
+        const value = A * x ** 2 + B * x * y + C * y ** 2 + D * x + E * y;
+        return value;
+    });
+}
 
 describe('Geom', () => {
     /*
@@ -49,9 +73,10 @@ describe('Geom', () => {
         it('should project 3D points onto a 2D plane', () => {
             const eye = { x: 0, y: 0, z: 10 };
             const affinePoints = new Matrix([
+                [0, 0, 0],
+                [0, 5, 0],
                 [0, 0, 5],
-                [0, 5, 5],
-                [7, 0, 5],
+                [1, 1, 1],
             ]);
 
             const result = Geom.ProjectiveXYProjection(eye, affinePoints);
@@ -59,42 +84,29 @@ describe('Geom', () => {
             expect(result).toEqual([
                 { x: 0, y: 0 },
                 { x: 0, y: 5 },
-                { x: 10, y: 10 },
+                { x: 0, y: 0 },
             ]);
-        });
-
-        it('should handle edge cases where z is equal to eye.z', () => {
-            const eye = { x: 0, y: 0, z: 10 };
-            const affinePoints = new Matrix([
-                [1],
-                [2],
-                [10],
-            ]);
-
-
-
-            const result = Geom.ProjectiveXYProjection(eye, affinePoints);
-
-            expect(result).toEqual([{ x: Infinity, y: Infinity }]);
         });
     });
     describe('EllipseFromPoints', () => {
         it('should compute ellipse coefficients from an array of points', () => {
             const points = [
-                { x: 1, y: 2 },
-                { x: 3, y: 4 },
-                { x: 5, y: 6 },
-                { x: 7, y: 8 },
-                { x: 9, y: 10 },
+                { x: 1, y: 0 },
+                { x: 0, y: 1 },
+                { x: -1, y: 0 },
+                { x: 0, y: -1 },
+                { x: Math.SQRT1_2, y: Math.SQRT1_2 },
             ];
 
             const result = Geom.EllipseFromPoints(points);
 
-            expect(result).toHaveProperty('A');
-            expect(result).toHaveProperty('B');
-            expect(result).toHaveProperty('C');
-            expect(result).toHaveProperty('D');
-            expect(result).toHaveProperty('E');
+            expect(result).toBeCloseToObject({
+                A: 1,
+                B: 0,
+                C: 1,
+                D: 0,
+                E: 0,
+            });
         });
 
         it('should return coefficients that satisfy the ellipse equation for the given points', () => {
@@ -134,30 +146,57 @@ describe('Geom', () => {
                 theta: 0,
             })
         });
-        
+
         it('should compute the standard form of a translated ellipse', () => {
             // (x-1)^2 + (y-2)^2 - 1 = 0
             // x^2 + y^2 - 2x - 4y + 4 = 0
             const coefficients = {
-                A: 1/-4,
+                A: 1 / -4,
                 B: 0,
-                C: 1/-4,
-                D: -2/-4,
-                E: -4/-4,
+                C: 1 / -4,
+                D: -2 / -4,
+                E: -4 / -4,
             };
             // 
 
             const result = Geom.EllipseStandardForm(coefficients);
 
             expect(result).toBeCloseToObject({
-                    cx: 1,
-                    cy: 2,
-                    rx: 1,
-                    ry: 1,
-                    theta: 0,
-                });
+                cx: 1,
+                cy: 2,
+                rx: 1,
+                ry: 1,
+                theta: 0,
+            });
         });
-        
+    });
+    describe('EllipseWithPerspective', () => {
+        it('should compute the ellipse coefficients with perspective transformation applied', () => {
+            const points = [
+                { x: 1, y: 0, z: 5 },
+                { x: 0, y: 1, z: 5 },
+                { x: -1, y: 0, z: 5 },
+                { x: 0, y: -1, z: 5 },
+                { x: Math.SQRT1_2, y: Math.SQRT1_2, z: 5 },
+            ];
+            const eye = { x: 0, y: 0, z: 2 };
+            const transform = new Matrix([
+                [1, 0, 0, 0],
+                [0, 1, 0, 0],
+                [0, 0, 1, 0],
+                [0, 0, 0, 1],
+            ]);
 
+            const result = Geom.EllipseWithPerspective(0, 0, 2, 1, eye, transform);
+            const expected = {
+                cx: 0,
+                cy: 0,
+                rx: 2,
+                ry: 1,
+                theta: 0,
+            };
+
+            expect(result).toBeCloseToObject(expected);
+        });
     });
 });

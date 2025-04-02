@@ -8,6 +8,26 @@
 
 import { Matrix } from '../matrix/matrix.js';
 
+function quadratic(a, b, c) {
+    const discriminant = b ** 2 - 4 * a * c;
+
+    if (discriminant < 0) {
+        return []; // No real roots
+    }
+
+    const sqrtDiscriminant = Math.sqrt(discriminant);
+
+    if (b >= 0) {
+        const x1 = (-b - sqrtDiscriminant) / (2 * a);
+        const x2 = (2 * c) / (-b - sqrtDiscriminant);
+        return [x1, x2];
+    } else {
+        const x1 = (2 * c) / (-b + sqrtDiscriminant);
+        const x2 = (-b + sqrtDiscriminant) / (2 * a);
+        return [x1, x2];
+    }
+}
+
 const Geom = {
     /**
      * Computes the coefficients of a general ellipse in the x-y plane
@@ -67,44 +87,30 @@ const Geom = {
         const b = (A+C);
         const c = A*C - (B/2)**2;
     
+        /*
         const rad = Math.sqrt(b**2 - 4*c);
-        const l1 = (b + rad)/2;
-        const l2 = (b - rad)/2;
+        const l2 = (b + rad)/2;
+        const l1 = (b - rad)/2;
+        */
+        const [l1, l2] = quadratic(1, -b, c);
 
         const x0 = (2 * C * D - B * E) / d0;
         const y0 = (2 * A * E - B * D) / d0;
 
         const theta = 0.5 * Math.atan2(-B, C - A);
 
+        
         const K = - (AQ.det() / A33.det());
+
 
         const rx = Math.sqrt(K / l1); 
         const ry = Math.sqrt(K / l2);
-        /*
-        // Calculate the center (x₀, y₀) of the ellipse
-        const denominator = B ** 2 - 4 * A * C;
-        const x0 = (2 * C * D - B * E) / denominator;
-        const y0 = (2 * A * E - B * D) / denominator;
-
-        // Calculate the semi-major and semi-minor axes
-        const term0 = 2 * (A * E ** 2 + C * D ** 2 - B * D * E + denominator* F);
-        const term1 = (A + C) + Math.sqrt((A - C) ** 2 + B ** 2);
-        const term2 = (A + C) - Math.sqrt((A - C) ** 2 + B ** 2);
-        const a = -Math.sqrt(term0 * term1) / (denominator);
-        console.log(term0 * term1);
-        console.log(a, (term0 * term1)/(denominator**2))
-        const rx = 1/(a**2)
-        //const rx = (denominator**2)/(term0 * term1);
-        const b = -Math.sqrt(term0 * term2) / (denominator);
-        const ry = 1/(b**2);
-
-        // Calculate the rotation angle (θ)
-        const theta = 0.5 * Math.atan2(-B, C - A);
-*/
+        
         return { cx: x0, cy: y0, rx, ry, theta };
     },
     /**
-     * Generates an ellipse with perspective transformation applied.
+     * Generates an ellipse in the xy plane via perspective projection from the given
+     *  ellipse defined by an affine transform of an ellipse defined in the xy plane.
      *
      * @param {number} cx - The x-coordinate of the center of the ellipse.
      * @param {number} cy - The y-coordinate of the center of the ellipse.
@@ -115,17 +121,24 @@ const Geom = {
      * @returns {Object} An object representing the ellipse in standard form after perspective transformation.
      */
     EllipseWithPerspective(cx, cy, rx, ry, eye, transform) {
-            const points = new Matrix(Array.from({ length: 8 }, (_, i) => {
-                const angle = (i * 2 * Math.PI) / 8;
-                return [cx + rx * Math.cos(angle), cy + ry * Math.sin(angle), 0, 1];
+
+        if (transform.m !== 4 || transform.n !== 4) {
+            throw new Error("Transform matrix must be 4x4.");
+        }
         
-            })).Transpose();
+        const points = new Matrix(Array.from({ length: 8 }, (_, i) => {
+            const angle = (i * 2 * Math.PI) / 8;
+            return [cx + rx * Math.cos(angle), cy + ry * Math.sin(angle), 0, 1];
+    
+        })).Transpose();
+
+    
+        const transformed = transform.Mult(points);
         
-            const transformed = transform.Mult(points);
-            const perspectivePoints = Geom.ProjectiveXYProjection(eye, transformed);
-            //console.log(perspectivePoints)
-            const standard = Geom.EllipseFromPoints(perspectivePoints);
-            return Geom.EllipseStandardForm(standard);
+        const perspectivePoints = Geom.ProjectiveXYProjection(eye, transformed);
+        const standard = Geom.EllipseFromPoints(perspectivePoints);
+
+        return Geom.EllipseStandardForm(standard);
     },
     /**
      * Projects a set of 3D affine points onto a 2D plane using a projective transformation.
@@ -135,6 +148,9 @@ const Geom = {
      * @returns {Array<{x: number, y: number}>} An array of 2D points resulting from the projection.
      */
     ProjectiveXYProjection(eye, affinePoints) {
+        if (affinePoints.m !== 4) {
+            throw new Error("Affine points matrix must have 4 rows.");
+        }
         const projectedPoints = [];
 
         for (let j = 0; j < affinePoints.n; j++) {
