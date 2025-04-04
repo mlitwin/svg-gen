@@ -36,4 +36,8 @@ yields
 </svg>
 ```
 
+## Samples
+
+[Github Pages](https://antoninus.org/svg-gen/)
+
 
