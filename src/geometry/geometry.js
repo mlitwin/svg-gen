@@ -144,6 +144,10 @@ const Geom = {
         const perspectivePoints = Geom.ProjectiveXYProjection(eye, transformed);
         const standard = Geom.EllipseFromPoints(perspectivePoints);
 
+        //console.log("transformed", transformed.Transpose());
+        //console.log("perspectivePoints", perspectivePoints);
+        //console.log("standard", standard);
+
         return Geom.EllipseStandardForm(standard);
     },
     /**
@@ -157,6 +161,7 @@ const Geom = {
         if (affinePoints.m !== 4) {
             throw new Error("Affine points matrix must have 4 rows.");
         }
+        //console.log("ProjectiveXYProjection affinePoints", affinePoints)
         const projectedPoints = [];
 
         for (let j = 0; j < affinePoints.n; j++) {

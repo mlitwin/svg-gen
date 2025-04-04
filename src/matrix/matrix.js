@@ -303,7 +303,7 @@ Matrix.SVDSolve = function (svd, B) {
 
 Matrix.prototype.Transform = function (transformation) {
     let result = this;
-    transformation.forEach(t => {
+    transformation.reverse().forEach(t => {
         switch (t.op) {
             case "Rotate":
                 result = result.Rotate(t.args);
@@ -311,6 +311,8 @@ Matrix.prototype.Transform = function (transformation) {
             case "Translate":
                 result = result.Translate(t.args);
                 break;
+            default:
+                throw new Error(`Unknown transformation operation: ${t.op}`);
         }
     });
     return result;

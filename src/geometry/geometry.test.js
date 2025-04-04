@@ -73,6 +73,23 @@ describe('Geom', () => {
                 { x: 0, y: 0 },
             ]);
         });
+        it('should project 3D points onto a 2D plane in a more complicated situation', () => {
+            const eye = { x: 0, y: 0, z: 10 };
+            const affinePoints = new Matrix([
+                [0, 0, 0],
+                [0, 5, 0],
+                [0, 5, 5],
+                [1, 1, 1],
+            ]);
+
+            const result = Geom.ProjectiveXYProjection(eye, affinePoints);
+
+            expect(result).toEqual([
+                { x: 0, y: 0 },
+                { x: 0, y: 10 },
+                { x: 0, y: 0 },
+            ]);
+        });
     });
     describe('EllipseFromPoints', () => {
         it('should compute ellipse coefficients from an array of points', () => {
@@ -156,15 +173,33 @@ describe('Geom', () => {
             });
         });
     });
+    describe('PointsWithPerspective', () => {
+        it('should compute points with perspective transformation applied', () => {
+            const points = new Matrix([
+                [0, 0, 0, 1],
+                [0, 5, 0, 1],
+                [0, 0, 5, 1],
+                [1, 1, 1, 1],
+            ]).Transpose();
+            const eye = { x: 0, y: 0, z: 2 };
+            const transform = new Matrix([
+                [1, 0, 0, 0],
+                [0, 1, 0, 0],
+                [0, 0, 1, 0],
+                [0, 0, 0, 1],
+            ]);
+            const result = Geom.PointsWithPerspective(points, eye, transform);
+            expect(result).toBeCloseToObject([
+                { x: 0, y: 0 },
+                { x: 0, y: 5 },
+                { x: 0, y: 0 },
+            ]);
+        });
+
+    });
     describe('EllipseWithPerspective', () => {
         it('should compute the ellipse coefficients with perspective transformation applied', () => {
-            const points = [
-                { x: 1, y: 0, z: 5 },
-                { x: 0, y: 1, z: 5 },
-                { x: -1, y: 0, z: 5 },
-                { x: 0, y: -1, z: 5 },
-                { x: Math.SQRT1_2, y: Math.SQRT1_2, z: 5 },
-            ];
+
             const eye = { x: 0, y: 0, z: 2 };
             const transform = new Matrix([
                 [1, 0, 0, 0],
