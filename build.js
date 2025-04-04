@@ -82,8 +82,8 @@ function makeSphere(context) {
             return latitude(context, l, 250);
         }),
 
-        //s.line({x1: -250, y1: 0, x2: 250, y2: 0, stroke: "red", 'stroke-width': 3}),
-        // s.line({x1: 0, y1: -250, x2: 0, y2: 250, stroke: "red", 'stroke-width': 3}),
+        context.s.line({x1: -250, y1: 0, x2: 250, y2: 0, stroke: "black", 'stroke-width': 3}),
+        context.s.line({x1: 0, y1: -250, x2: 0, y2: 250, stroke: "black", 'stroke-width': 3, transform: `rotate(${context.skew * 180/Math.PI} 0 0)`}),
     ]);
 
     return svg;

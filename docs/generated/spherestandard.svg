@@ -24,4 +24,6 @@
   <ellipse cx="-0.11668021133323223" cy="-2.966045738323553e-13" rx="251.9746719473879" ry="0.9338254692336113" transform="rotate(90 -0.11668021133323223 -2.966045738323553e-13)" fill="none" stroke="black" stroke-width="1"/>
   <ellipse cx="9.146994263189145" cy="7.206842177310477e-15" rx="251.8239837428737" ry="76.1358688568393" transform="rotate(-89.99999999999993 9.146994263189145 7.206842177310477e-15)" fill="none" stroke="black" stroke-width="1"/>
   <ellipse cx="15.12956403527818" cy="1.1399657762479495e-13" rx="251.36290892978533" ry="145.4849563922485" transform="rotate(89.99999999999959 15.12956403527818 1.1399657762479495e-13)" fill="none" stroke="black" stroke-width="1"/>
+  <line x1="-250" y1="0" x2="250" y2="0" stroke="black" stroke-width="3"/>
+  <line x1="0" y1="-250" x2="0" y2="250" transform="rotate(0 0 0)" stroke="black" stroke-width="3"/>
 </svg>
