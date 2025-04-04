@@ -5,7 +5,8 @@
     "description": "A tool for generating SVG files",
     "main": "index.js",
     "scripts": {
-        "test": "vitest"
+        "test": "vitest",
+        "build": "node spherestandard.js > docs/generated/spherestandard.svg"
     },
     "repository": {
         "type": "git",
