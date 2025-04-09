@@ -39,6 +39,17 @@ function longitude(context, l, R) {
             args: { axes: "X", angle: Math.PI / 2 }
         },
     ];
+    const opts = {
+        cx: 0, cy: 0, r, fill: "none",
+        stroke: "black",
+        'stroke-width': 1
+    };
+    const perspective = {
+        eye: context.eye,
+        transform: Matrix.Identity(4).Transform(transform)
+    }
+
+    return context.s.circle(opts).withPerspective(perspective);
 
     return EllipseFromCircle(context, { cx: 0, cy: 0, r }, Matrix.Identity(4).Transform(transform));
 }
@@ -58,6 +69,19 @@ function latitude(context, i, R) {
         },
     ];
 
+    const opts = {
+        cx: 0, cy: 0, r: R, fill: "none",
+        stroke: "black",
+        'stroke-width': 1
+    };
+    const perspective = {
+        eye: context.eye,
+        transform: Matrix.Identity(4).Transform(transform)
+    }
+
+    return context.s.circle(opts).withPerspective(perspective);
+
+
     return EllipseFromCircle(context, { cx: 0, cy: 0, r: R }, Matrix.Identity(4).Transform(transform));
 }
 
@@ -75,15 +99,15 @@ function makeSphere(context) {
         height: 600,
         viewBox: "-300 -300 600 600"
     }, [
-        ...makeRange(-8, 8).map(i => (i / 8) * (Math.PI / 2)).map(l => {
+        ...makeRange(-16, 16).map(i => (i / 16) * (Math.PI / 2)).map(l => {
             return longitude(context, l, 250);
         }),
-        ...makeRange(0, 7).map(i => (i / 8) * (Math.PI / 2)).map(l => {
+        ...makeRange(0, 10).map(i => (i / 16) * (Math.PI / 2)).map(l => {
             return latitude(context, l, 250);
         }),
 
-        context.s.line({x1: -250, y1: 0, x2: 250, y2: 0, stroke: "black", 'stroke-width': 3}),
-        context.s.line({x1: 0, y1: -250, x2: 0, y2: 250, stroke: "black", 'stroke-width': 3, transform: `rotate(${context.skew * 180/Math.PI} 0 0)`}),
+        context.s.line({ x1: -250, y1: 0, x2: 250, y2: 0, stroke: "black", 'stroke-width': 3 }),
+        context.s.line({ x1: 0, y1: -250, x2: 0, y2: 250, stroke: "black", 'stroke-width': 3, transform: `rotate(${context.skew * 180 / Math.PI} 0 0)` }),
     ]);
 
     return svg;
