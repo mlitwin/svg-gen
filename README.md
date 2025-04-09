@@ -36,6 +36,69 @@ yields
 </svg>
 ```
 
+## Perspective
+
+## `withPerspective()` Method
+
+The `withPerspective()` method is available for the `circle` and `ellipse` SVG types. This method allows you to create SVG elements with transformations applied based on a given perspective.
+
+### Usage
+
+The `withPerspective()` method applies a perspective transformation to a `circle` or `ellipse` element. It converts the geometry into an ellipse if necessary and applies rotation and scaling transformations.
+
+#### Parameters
+
+- `perspective` (Object): An object containing the following properties:
+  - `eye` (Object): The eye position for the perspective transformation.
+  - `transform` (Object): The transformation matrix to apply.
+
+#### Returns
+
+An SVG `ellipse` element with the specified properties and transformations.
+
+#### Example
+
+```javascript
+import svgGen, {parseToText} from './src/svg-gen.js';
+import { Matrix } from './src/matrix/matrix.js';
+import Geom from './src/geometry/geometry.js';
+
+const transform = [
+
+    {
+        op: "Rotate",
+        args: { axes: "Y", angle: l }
+    },
+    {
+        op: "Rotate",
+        args: { axes: "X", angle: Math.PI/4 }
+    },
+];
+
+const opts = {
+    cx: 0, cy: 0, r: R, fill: "none",
+    stroke: "black",
+    'stroke-width': 1
+};
+const perspective = {
+    eye:  { x: -50, y: 0, z: -2000 },
+    transform: Matrix.Identity(4).Transform(transform)
+}
+
+const s = new svgGen({});
+const svg = s.svg({}, [
+    s.circle({ cx: 50, cy: 50, r: 40 }).withPerspective( {
+        eye:  { x: -50, y: 0, z: -2000 },
+        transform: Matrix.Identity(4).Transform(transform)
+    })
+    ]
+);
+
+    return context.s.circle(opts).withPerspective(perspective);
+
+console.debug(parseToText(svg));
+```
+
 ## Samples
 
 [Github Pages](https://antoninus.org/svg-gen/)

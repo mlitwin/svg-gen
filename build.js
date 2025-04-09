@@ -3,27 +3,6 @@ import { Matrix } from './src/matrix/matrix.js';
 import Geom from './src/geometry/geometry.js';
 import fs from 'fs';
 
-
-function EllipseFromCircle(context, opts, transform) {
-    const standard = Geom.EllipseWithPerspective(opts.cx, opts.cy, opts.r, opts.r, context.eye, transform);
-
-    const cx = standard.cx;
-    const cy = standard.cy;
-    const rx = standard.rx;
-    const ry = standard.ry;
-
-    return context.s.ellipse({
-        cx,
-        cy,
-        rx,
-        ry,
-        fill: "none",
-        stroke: "black",
-        'stroke-width': 1,
-        transform: `rotate(${standard.theta * 180 / Math.PI} ${cx} ${cy})`
-    });
-}
-
 function longitude(context, l, R) {
 
     const dy = Math.round(Math.sin(l) * R);
@@ -50,8 +29,6 @@ function longitude(context, l, R) {
     }
 
     return context.s.circle(opts).withPerspective(perspective);
-
-    return EllipseFromCircle(context, { cx: 0, cy: 0, r }, Matrix.Identity(4).Transform(transform));
 }
 
 function latitude(context, i, R) {
@@ -80,9 +57,6 @@ function latitude(context, i, R) {
     }
 
     return context.s.circle(opts).withPerspective(perspective);
-
-
-    return EllipseFromCircle(context, { cx: 0, cy: 0, r: R }, Matrix.Identity(4).Transform(transform));
 }
 
 function makeRange(first, last) {
