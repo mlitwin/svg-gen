@@ -105,6 +105,10 @@ console.debug(parseToText(svg));
 
 # References
 
+## Spherical Coordinate Systems
+
+* https://en.wikipedia.org/wiki/Spherical_coordinate_system
+
 ## Matrices
 
 ### Singular Value Decomposition
