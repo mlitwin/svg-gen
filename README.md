@@ -1,6 +1,6 @@
 # svg-gen
 
-Javascript SVG Generation. At this points pretty bare-bones as I figure out what I want. Similar to [svg.py](https://github.com/orsinium-labs/svg.py) or [snap.svg])http://snapsvg.io/) I think. I'm adding support for perspective transformations applied directly, rather than (somewhat buggy) CSS perspective transformations, and learning about geometry, perspective, and SVGs along the way.
+Javascript SVG Generation. At this points pretty bare-bones as I figure out what I want. Similar to [svg.py](https://github.com/orsinium-labs/svg.py) or [snap.svg](http://snapsvg.io/) I think. I'm adding support for perspective transformations applied directly, rather than (somewhat buggy) CSS perspective transformations, and learning about geometry, perspective, and SVGs along the way.
 
 ## Usage
 
