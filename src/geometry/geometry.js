@@ -142,13 +142,13 @@ const Geom = {
         const transformed = transform.Mult(points);
         
         const perspectivePoints = Geom.ProjectiveXYProjection(eye, transformed);
+        const regression = Geom.LinearRegression(perspectivePoints);
+
+
         const standard = Geom.EllipseFromPoints(perspectivePoints);
+        const ellipse = Geom.EllipseStandardForm(standard);
 
-        //console.log("transformed", transformed.Transpose());
-        //console.log("perspectivePoints", perspectivePoints);
-        //console.log("standard", standard);
-
-        return Geom.EllipseStandardForm(standard);
+        return {ellipse, regression};
     },
     /**
      * Projects a set of 3D affine points onto a 2D plane using a projective transformation.
@@ -174,7 +174,84 @@ const Geom = {
         }
 
         return projectedPoints;
+    },
+    /**
+     * Performs a linear regression on a set of points to determine the best-fit line.
+     * The resulting line equation is in the form Ax + By + C = 0, and the function
+     * also calculates the coefficient of determination (r²) to indicate the goodness of fit.
+     *
+     * @param {Array<{x: number, y: number}>} points - An array of points, where each point is an object with `x` and `y` properties.
+     * @returns {{A: number, B: number, C: number, r2: number}} An object containing:
+     *   - `A` (number): The coefficient for x in the line equation.
+     *   - `B` (number): The coefficient for y in the line equation.
+     *   - `C` (number): The constant term in the line equation.
+     *   - `r2` (number): The coefficient of determination, indicating the goodness of fit.
+     *   - `worstR2` (number): Worst r^2 residual for the points, to check if the points are linear.
+     */
+    LinearRegression(points) {
+    const n = points.length;
+    if (n < 2) {
+        throw new Error("At least two points are required for linear regression.");
     }
+
+    let sumX = 0, sumY = 0, sumXY = 0, sumX2 = 0, sumY2 = 0;
+
+    for (const { x, y } of points) {
+        sumX += x;
+        sumY += y;
+        sumXY += x * y;
+        sumX2 += x * x;
+        sumY2 += y * y;
+    }
+
+    const meanX = sumX / n;
+    const meanY = sumY / n;
+
+    const denominatorX = sumX2 - n * meanX ** 2;
+    const denominatorY = sumY2 - n * meanY ** 2;
+
+    if (denominatorX === 0 && denominatorY === 0) {
+        throw new Error("All points are identical; linear regression is undefined.");
+    }
+
+    let A, B, C;
+
+    if (denominatorX >= denominatorY) {
+        const slope = (sumXY - n * meanX * meanY) / denominatorX;
+        const intercept = meanY - slope * meanX;
+        A = -slope;
+        B = 1;
+        C = -intercept;
+    } else {
+        const slope = (sumXY - n * meanX * meanY) / denominatorY;
+        const intercept = meanX - slope * meanY;
+        A = 1;
+        B = -slope;
+        C = -intercept;
+    }
+
+    const ssTotal = sumY2 - n * meanY ** 2;
+    const ssResidual = points.reduce((sum, { x, y }) => {
+        const predictedY = -(A * x + C) / B;
+        return sum + (y - predictedY) ** 2;
+    }, 0);
+
+    const r2 = ssTotal === 0 ? 1 : 1 - ssResidual / ssTotal;
+    const worstR2 = points.reduce((worst, { x, y }) => {
+        const predictedY = -(A * x + C) / B;
+        const residual = Math.abs(y - predictedY);
+        return Math.max(worst, residual);
+    }, 0);
+
+    const x1 = Math.min(...points.map(p => p.x));
+    const x2 = Math.max(...points.map(p => p.x));
+    const y1 = -(A * x1 + C) / B;
+    const y2 = -(A * x2 + C) / B;
+    
+    return { A, B, C, r2, worstR2, x1, y1, x2, y2 };
+    }
+
 };
+
 
 export default Geom;

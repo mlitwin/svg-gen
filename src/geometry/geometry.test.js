@@ -217,7 +217,7 @@ describe('Geom', () => {
                 theta: 0,
             };
 
-            expect(result).toBeCloseToObject(expected);
+            expect(result.ellipse).toBeCloseToObject(expected);
         });
     });
 });

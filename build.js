@@ -3,8 +3,8 @@ import { Matrix } from './src/matrix/matrix.js';
 import Geom from './src/geometry/geometry.js';
 import fs from 'fs';
 
-function longitude(context, l, R) {
-
+function longitude(context, i, n, R) {
+    const l = i * (Math.PI / 2) / n;
     const dy = Math.round(Math.sin(l) * R);
     const r = Math.abs(Math.cos(l) * R);
 
@@ -21,7 +21,7 @@ function longitude(context, l, R) {
     const opts = {
         cx: 0, cy: 0, r, fill: "none",
         stroke: "black",
-        'stroke-width': 1
+        'stroke-width': i == 0 ? 2: 1
     };
     const perspective = {
         eye: context.eye,
@@ -31,8 +31,8 @@ function longitude(context, l, R) {
     return context.s.circle(opts).withPerspective(perspective);
 }
 
-function latitude(context, i, R) {
-    const l = i * (Math.PI / 2);
+function latitude(context, i, n, R) {
+    const l = i * (Math.PI / 2) / n;
 
     const transform = [
 
@@ -49,7 +49,7 @@ function latitude(context, i, R) {
     const opts = {
         cx: 0, cy: 0, r: R, fill: "none",
         stroke: "black",
-        'stroke-width': 1
+        'stroke-width': i === n ? 2: 1
     };
     const perspective = {
         eye: context.eye,
@@ -73,16 +73,13 @@ function makeSphere(context) {
         height: 600,
         viewBox: "-300 -300 600 600"
     }, [
-        ...makeRange(-16, 16).map(i => (i / 16) * (Math.PI / 2)).map(l => {
-            return longitude(context, l, 250);
+        ...makeRange(-16, 16).map(i => {
+            return longitude(context, i, 16, 250);
         }),
-        ...makeRange(0, 10).map(i => (i / 16) * (Math.PI / 2)).map(l => {
-            return latitude(context, l, 250);
+        ...makeRange(0, 16).map(i => {
+            return latitude(context, i, 16, 250);
         }),
-
-        context.s.line({ x1: -250, y1: 0, x2: 250, y2: 0, stroke: "black", 'stroke-width': 3 }),
-        context.s.line({ x1: 0, y1: -250, x2: 0, y2: 250, stroke: "black", 'stroke-width': 3, transform: `rotate(${context.skew * 180 / Math.PI} 0 0)` }),
-    ]);
+   ]);
 
     return svg;
 }

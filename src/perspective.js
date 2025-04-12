@@ -36,7 +36,18 @@ function elementFromCircleOrEllipse(perspective) {
         delete geomOpts.r;
     }
 
-    const ellipse = Geom.EllipseWithPerspective(geomOpts.cx, geomOpts.cy, geomOpts.rx, geomOpts.ry, perspective.eye, perspective.transform);
+    const {ellipse, regression} = Geom.EllipseWithPerspective(geomOpts.cx, geomOpts.cy, geomOpts.rx, geomOpts.ry, perspective.eye, perspective.transform);
+
+    if (regression.worstR2 < 0.99) {
+        const {x1, y1, x2, y2} = regression;
+        return this.s.line({
+            x1,
+            y1,
+            x2,
+            y2,
+           ...opts
+        });
+    }
 
     const cx = ellipse.cx;
     const cy = ellipse.cy;
