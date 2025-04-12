@@ -249,7 +249,75 @@ const Geom = {
     const y2 = -(A * x2 + C) / B;
     
     return { A, B, C, r2, worstR2, x1, y1, x2, y2 };
+    },
+    /**
+     * Finds the intersection line of two planes in 3D space.
+     * Each plane is defined by a point on the plane and a normal vector.
+     * 
+     * @param {Object} plane1 - First plane definition
+     * @param {Array<number>} plane1.point - Point on the first plane [x, y, z]
+     * @param {Array<number>} plane1.normal - Normal vector of the first plane [x, y, z]
+     * @param {Object} plane2 - Second plane definition
+     * @param {Array<number>} plane2.point - Point on the second plane [x, y, z]
+     * @param {Array<number>} plane2.normal - Normal vector of the second plane [x, y, z]
+     * @returns {Object} Intersection line definition:
+     *                   - point: A point on the intersection line [x, y, z]
+     *                   - direction: Direction vector of the intersection line [x, y, z]
+     *                   Returns null if planes are parallel
+     */
+    PlanesIntersection(plane1, plane2) {
+        const [n1x, n1y, n1z] = plane1.normal;
+        const [n2x, n2y, n2z] = plane2.normal;
+        
+        // Direction of intersection line is cross product of normals
+        const direction = [
+            n1y * n2z - n1z * n2y,
+            n1z * n2x - n1x * n2z,
+            n1x * n2y - n1y * n2x
+        ];
+        
+        // Check if planes are parallel
+        const directionMagnitude = Math.sqrt(
+            direction[0] * direction[0] + 
+            direction[1] * direction[1] + 
+            direction[2] * direction[2]
+        );
+        
+        if (directionMagnitude < 1e-10) {
+            return null; // Planes are parallel
+        }
+        
+        // Normalize direction vector
+        direction[0] /= directionMagnitude;
+        direction[1] /= directionMagnitude;
+        direction[2] /= directionMagnitude;
+        
+        // Find a point on the intersection line
+        // Using the method from: http://geomalgorithms.com/a05-_intersect-1.html
+        const [p1x, p1y, p1z] = plane1.point;
+        const [p2x, p2y, p2z] = plane2.point;
+        
+        const n1n1 = n1x * n1x + n1y * n1y + n1z * n1z;
+        const n2n2 = n2x * n2x + n2y * n2y + n2z * n2z;
+        const n1n2 = n1x * n2x + n1y * n2y + n1z * n2z;
+        
+        const d1 = n1x * p1x + n1y * p1y + n1z * p1z;
+        const d2 = n2x * p2x + n2y * p2y + n2z * p2z;
+        
+        const det = n1n1 * n2n2 - n1n2 * n1n2;
+        
+        const c1 = (d1 * n2n2 - d2 * n1n2) / det;
+        const c2 = (d2 * n1n1 - d1 * n1n2) / det;
+        
+        const point = [
+            c1 * n1x + c2 * n2x,
+            c1 * n1y + c2 * n2y,
+            c1 * n1z + c2 * n2z
+        ];
+        
+        return { point, direction };
     }
+    
 
 };
 
