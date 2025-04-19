@@ -257,4 +257,43 @@ describe('Geom', () => {
             });
         });
     });
+    describe('PolygonFromLineIntersectionPolygon', () => {
+        it('should compute the intersection of a line with a polygon and return the resulting polygon', () => {
+            const line = { x0: 2, y0: 0, x1: 2, y1: 4 };
+            const sidePoint = { x: 0, y: 0 };
+            const polygon = [
+                { x: 0, y: 0 },
+                { x: 4, y: 0 },
+                { x: 4, y: 4 },
+                { x: 0, y: 4 },
+            ];
+
+            const result = Geom.PolygonFromLineIntersectionPolygon(line, sidePoint, polygon);
+
+            expect(result).toBeCloseToObject([
+                { x: 0, y: 0 },
+                { x: 2, y: 0 },
+                { x: 2, y: 4 },
+                { x: 0, y: 4 },
+            ]);
+        });
+        it('should compute the intersection of a line with a polygon and where the line hits vertices of the polygon ', () => {
+            const line = { x0: 0, y0: 0, x1: 4, y1: 4 };
+            const sidePoint = { x: 0, y: 0 };
+            const polygon = [
+                { x: 0, y: 0 },
+                { x: 4, y: 0 },
+                { x: 4, y: 4 },
+                { x: 0, y: 4 },
+            ];
+
+            const result = Geom.PolygonFromLineIntersectionPolygon(line, sidePoint, polygon);
+
+            expect(result).toBeCloseToObject([
+                { x: 0, y: 0 },
+                { x: 4, y: 4 },
+                { x: 0, y: 4 },
+            ]);
+        });
+    });
 });

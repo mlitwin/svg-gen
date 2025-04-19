@@ -378,6 +378,60 @@ const Geom = {
                   ((x1_1 - x0_1) ** 2 + (y1_1 - y0_1) ** 2);
 
         return { x, y, l };
+    },
+    /**
+     * Generates a polygon from the intersection of a line with another polygon.
+     * 
+     * @param {{x0: number, y0: number, x1: number, y1: number}} line - The line defined by two points (x0, y0) and (x1, y1).
+     * @param {{x: number, y: number}} sidePoint - A point used to determine which side of the line to include.
+     * @param {{x: number, y: number}[]} poly - An array of points defining the vertices of the polygon.
+     * @returns {{x: number, y: number}[]} A new polygon consisting of the points from the input polygon that are on the same side of the line as `sidePoint`, 
+     * along with the intersection points of the line with the polygon's edges.
+     */
+    PolygonFromLineIntersectionPolygon(line, sidePoint, poly) {
+        const { x0, y0, x1, y1 } = line;
+
+        // Helper function to determine which side of the line a point is on
+        const side = (x, y) => (x1 - x0) * (y - y0) - (y1 - y0) * (x - x0);
+
+        const sideOfSidePoint = side(sidePoint.x, sidePoint.y);
+        const result = [];
+
+        for (let i = 0; i < poly.length; i++) {
+            const current = poly[i];
+            const next = poly[(i + 1) % poly.length];
+
+            const currentSide = side(current.x, current.y);
+            const nextSide = side(next.x, next.y);
+
+            // Include the current point if it's on the same side as the sidePoint
+            if (currentSide * sideOfSidePoint >= 0) {
+                result.push(current);
+            }
+
+            // Check if the edge intersects the line
+            if (currentSide * nextSide < 0) {
+                const intersection = Geom.PointFromIntersectionOfLinesInPlane(
+                    { x0, y0, x1, y1 },
+                    { x0: current.x, y0: current.y, x1: next.x, y1: next.y }
+                );
+                result.push({ x: intersection.x, y: intersection.y });
+            }
+        }
+
+        // Sort the resulting polygon vertices in counter-clockwise order
+        const centroid = result.reduce((acc, point) => ({
+            x: acc.x + point.x / result.length,
+            y: acc.y + point.y / result.length,
+        }), { x: 0, y: 0 });
+
+        result.sort((a, b) => {
+            const angleA = Math.atan2(a.y - centroid.y, a.x - centroid.x);
+            const angleB = Math.atan2(b.y - centroid.y, b.x - centroid.x);
+            return angleA - angleB;
+        });
+
+        return result;
     }
 };
 
