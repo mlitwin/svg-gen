@@ -55,7 +55,7 @@ describe('Geom', () => {
     });
     */
 
-    describe('ProjectiveXYProjection', () => {
+    describe('PerspectiveXYProjection', () => {
         it('should project 3D points onto a 2D plane', () => {
             const eye = { x: 0, y: 0, z: 10 };
             const affinePoints = new Matrix([
@@ -65,7 +65,7 @@ describe('Geom', () => {
                 [1, 1, 1],
             ]);
 
-            const result = Geom.ProjectiveXYProjection(eye, affinePoints);
+            const result = Geom.PerspectiveXYProjection(eye, affinePoints);
 
             expect(result).toEqual([
                 { x: 0, y: 0 },
@@ -82,7 +82,7 @@ describe('Geom', () => {
                 [1, 1, 1],
             ]);
 
-            const result = Geom.ProjectiveXYProjection(eye, affinePoints);
+            const result = Geom.PerspectiveXYProjection(eye, affinePoints);
 
             expect(result).toEqual([
                 { x: 0, y: 0 },
@@ -220,101 +220,41 @@ describe('Geom', () => {
             expect(result.ellipse).toBeCloseToObject(expected);
         });
     });
-
-    describe('PlanesIntersection', () => {
-        it('should find intersection of two perpendicular planes', () => {
+    describe('LineFromIntersectionOfPlanes', () => {
+        it('should compute the intersection line of two planes', () => {
             const plane1 = {
                 point: [0, 0, 0],
-                normal: [0, 0, 1]  // xy-plane
+                normal: [1, 0, 0],
             };
             const plane2 = {
                 point: [0, 0, 0],
-                normal: [0, 1, 0]  // xz-plane
+                normal: [0, 1, 0],
             };
 
-            const result = Geom.PlanesIntersection(plane1, plane2);
-            
-            // Should intersect along x-axis (direction can be either [1,0,0] or [-1,0,0])
-            expect(result.point).toBeCloseToObject([0, 0, 0]);
-            expect(Math.abs(result.direction[0])).toBeCloseTo(1);
-            expect(result.direction[1]).toBeCloseTo(0);
-            expect(result.direction[2]).toBeCloseTo(0);
+            const result = Geom.LineFromIntersectionOfPlanes(plane1, plane2);
+
+            expect(result).toEqual({
+                direction: [0, 0, 1],
+                point: [0, 0, 0],
+            });
         });
-
-        it('should find intersection of two non-perpendicular planes', () => {
-            const plane1 = {
-                point: [0, 0, 0],
-                normal: [1, 1, 0]  // plane at 45 degrees to x and y axes
+    });
+    describe('PointFromIntersectionOfLinesInPlane', () => {
+        it('should compute the intersection point of two lines in a plane', () => {
+            const line1 = {
+                x0: 0, y0: 0, x1: 4, y1: 4
             };
-            const plane2 = {
-                point: [0, 0, 0],
-                normal: [0, 1, 1]  // plane at 45 degrees to y and z axes
-            };
-
-            const result = Geom.PlanesIntersection(plane1, plane2);
-            
-            // Verify point lies on both planes
-            const dot1 = result.point[0] + result.point[1];  // dot product with plane1 normal
-            const dot2 = result.point[1] + result.point[2];  // dot product with plane2 normal
-            expect(dot1).toBeCloseTo(0);
-            expect(dot2).toBeCloseTo(0);
-            
-            // Verify direction is perpendicular to both normals
-            const dotDir1 = result.direction[0] + result.direction[1];
-            const dotDir2 = result.direction[1] + result.direction[2];
-            expect(dotDir1).toBeCloseTo(0);
-            expect(dotDir2).toBeCloseTo(0);
-        });
-
-        it('should handle parallel planes', () => {
-            const plane1 = {
-                point: [0, 0, 0],
-                normal: [0, 0, 1]
-            };
-            const plane2 = {
-                point: [0, 0, 1],  // parallel plane shifted up by 1
-                normal: [0, 0, 1]
+            const line2 = {
+                x0: 0, y0: 4, x1: 4, y1: 0
             };
 
-            const result = Geom.PlanesIntersection(plane1, plane2);
-            expect(result).toBeNull();
-        });
+            const result = Geom.PointFromIntersectionOfLinesInPlane(line1, line2);
 
-        it('should handle nearly parallel planes', () => {
-            const plane1 = {
-                point: [0, 0, 0],
-                normal: [0, 0, 1]
-            };
-            const plane2 = {
-                point: [0, 0, 0],
-                normal: [0, 0.0001, 1]  // nearly parallel to plane1
-            };
-
-            const result = Geom.PlanesIntersection(plane1, plane2);
-            expect(result).not.toBeNull();
-            
-            // Direction should be close to [1, 0, 0] or [-1, 0, 0]
-            expect(Math.abs(result.direction[0])).toBeCloseTo(1);
-            expect(result.direction[1]).toBeCloseTo(0);
-            expect(result.direction[2]).toBeCloseTo(0);
-        });
-
-        it('should handle planes with different points', () => {
-            const plane1 = {
-                point: [1, 2, 3],
-                normal: [1, 0, 0]
-            };
-            const plane2 = {
-                point: [4, 5, 6],
-                normal: [0, 1, 0]
-            };
-
-            const result = Geom.PlanesIntersection(plane1, plane2);
-            
-            // Point should lie on both planes
-            expect(result.point[0]).toBeCloseTo(1);  // x=1 for plane1
-            expect(result.point[1]).toBeCloseTo(5);  // y=5 for plane2
-            expect(result.direction).toBeCloseToObject([0, 0, 1]);  // z-axis direction
+            expect(result).toBeCloseToObject({
+                x: 2,
+                y: 2,
+                l: 0.5,
+            });
         });
     });
 });

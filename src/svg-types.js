@@ -19,6 +19,7 @@ const allElementsOptions = [
     { name: "fill" },
     { name: "stroke" },
     { name: "stroke-width" },
+    { name: "clip-path" },
 ];
 
 const svgTypes = {

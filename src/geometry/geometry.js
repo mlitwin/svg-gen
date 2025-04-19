@@ -84,24 +84,24 @@ const Geom = {
 
         const d0 = B ** 2 - 4 * A * C;
 
-        const b = (A+C);
-        const c = A*C - (B/2)**2;
-    
+        const b = (A + C);
+        const c = A * C - (B / 2) ** 2;
+
 
         const [l1, l2] = quadratic(1, -b, c);
-        
+
         const x0 = (2 * C * D - B * E) / d0;
         const y0 = (2 * A * E - B * D) / d0;
 
         const theta = 0.5 * Math.atan2(-B, C - A);
 
-        
+
         const K = - (AQ.det() / A33.det());
 
 
-        const rx = Math.sqrt(K / l1); 
+        const rx = Math.sqrt(K / l1);
         const ry = Math.sqrt(K / l2);
-        
+
         return { cx: x0, cy: y0, rx, ry, theta };
     },
     PointsWithPerspective(points, eye, transform) {
@@ -109,9 +109,9 @@ const Geom = {
         if (transform.m !== 4 || transform.n !== 4) {
             throw new Error("Transform matrix must be 4x4.");
         }
-    
+
         const transformed = transform.Mult(points);
-        const perspectivePoints = Geom.ProjectiveXYProjection(eye, transformed);
+        const perspectivePoints = Geom.PerspectiveXYProjection(eye, transformed);
         return perspectivePoints;
     },
     /**
@@ -131,24 +131,24 @@ const Geom = {
         if (transform.m !== 4 || transform.n !== 4) {
             throw new Error("Transform matrix must be 4x4.");
         }
-        
+
         const points = new Matrix(Array.from({ length: 8 }, (_, i) => {
             const angle = (i * 2 * Math.PI) / 8;
             return [cx + rx * Math.cos(angle), cy + ry * Math.sin(angle), 0, 1];
-    
+
         })).Transpose();
 
-    
+
         const transformed = transform.Mult(points);
-        
-        const perspectivePoints = Geom.ProjectiveXYProjection(eye, transformed);
+
+        const perspectivePoints = Geom.PerspectiveXYProjection(eye, transformed);
         const regression = Geom.LinearRegression(perspectivePoints);
 
 
         const standard = Geom.EllipseFromPoints(perspectivePoints);
         const ellipse = Geom.EllipseStandardForm(standard);
 
-        return {ellipse, regression};
+        return { ellipse, regression };
     },
     /**
      * Projects a set of 3D affine points onto a 2D plane using a projective transformation.
@@ -157,11 +157,11 @@ const Geom = {
      * @param {Array<Array<number>>} affinePoints - A matrix representing the affine points in 3D space.
      * @returns {Array<{x: number, y: number}>} An array of 2D points resulting from the projection.
      */
-    ProjectiveXYProjection(eye, affinePoints) {
+    PerspectiveXYProjection(eye, affinePoints) {
         if (affinePoints.m !== 4) {
             throw new Error("Affine points matrix must have 4 rows.");
         }
-        //console.log("ProjectiveXYProjection affinePoints", affinePoints)
+        //console.log("PerspectiveXYProjection affinePoints", affinePoints)
         const projectedPoints = [];
 
         for (let j = 0; j < affinePoints.n; j++) {
@@ -189,66 +189,66 @@ const Geom = {
      *   - `worstR2` (number): Worst r^2 residual for the points, to check if the points are linear.
      */
     LinearRegression(points) {
-    const n = points.length;
-    if (n < 2) {
-        throw new Error("At least two points are required for linear regression.");
-    }
+        const n = points.length;
+        if (n < 2) {
+            throw new Error("At least two points are required for linear regression.");
+        }
 
-    let sumX = 0, sumY = 0, sumXY = 0, sumX2 = 0, sumY2 = 0;
+        let sumX = 0, sumY = 0, sumXY = 0, sumX2 = 0, sumY2 = 0;
 
-    for (const { x, y } of points) {
-        sumX += x;
-        sumY += y;
-        sumXY += x * y;
-        sumX2 += x * x;
-        sumY2 += y * y;
-    }
+        for (const { x, y } of points) {
+            sumX += x;
+            sumY += y;
+            sumXY += x * y;
+            sumX2 += x * x;
+            sumY2 += y * y;
+        }
 
-    const meanX = sumX / n;
-    const meanY = sumY / n;
+        const meanX = sumX / n;
+        const meanY = sumY / n;
 
-    const denominatorX = sumX2 - n * meanX ** 2;
-    const denominatorY = sumY2 - n * meanY ** 2;
+        const denominatorX = sumX2 - n * meanX ** 2;
+        const denominatorY = sumY2 - n * meanY ** 2;
 
-    if (denominatorX === 0 && denominatorY === 0) {
-        throw new Error("All points are identical; linear regression is undefined.");
-    }
+        if (denominatorX === 0 && denominatorY === 0) {
+            throw new Error("All points are identical; linear regression is undefined.");
+        }
 
-    let A, B, C;
+        let A, B, C;
 
-    if (denominatorX >= denominatorY) {
-        const slope = (sumXY - n * meanX * meanY) / denominatorX;
-        const intercept = meanY - slope * meanX;
-        A = -slope;
-        B = 1;
-        C = -intercept;
-    } else {
-        const slope = (sumXY - n * meanX * meanY) / denominatorY;
-        const intercept = meanX - slope * meanY;
-        A = 1;
-        B = -slope;
-        C = -intercept;
-    }
+        if (denominatorX >= denominatorY) {
+            const slope = (sumXY - n * meanX * meanY) / denominatorX;
+            const intercept = meanY - slope * meanX;
+            A = -slope;
+            B = 1;
+            C = -intercept;
+        } else {
+            const slope = (sumXY - n * meanX * meanY) / denominatorY;
+            const intercept = meanX - slope * meanY;
+            A = 1;
+            B = -slope;
+            C = -intercept;
+        }
 
-    const ssTotal = sumY2 - n * meanY ** 2;
-    const ssResidual = points.reduce((sum, { x, y }) => {
-        const predictedY = -(A * x + C) / B;
-        return sum + (y - predictedY) ** 2;
-    }, 0);
+        const ssTotal = sumY2 - n * meanY ** 2;
+        const ssResidual = points.reduce((sum, { x, y }) => {
+            const predictedY = -(A * x + C) / B;
+            return sum + (y - predictedY) ** 2;
+        }, 0);
 
-    const r2 = ssTotal === 0 ? 1 : 1 - ssResidual / ssTotal;
-    const worstR2 = points.reduce((worst, { x, y }) => {
-        const predictedY = -(A * x + C) / B;
-        const residual = Math.abs(y - predictedY);
-        return Math.max(worst, residual);
-    }, 0);
+        const r2 = ssTotal === 0 ? 1 : 1 - ssResidual / ssTotal;
+        const worstR2 = points.reduce((worst, { x, y }) => {
+            const predictedY = -(A * x + C) / B;
+            const residual = Math.abs(y - predictedY);
+            return Math.max(worst, residual);
+        }, 0);
 
-    const x1 = Math.min(...points.map(p => p.x));
-    const x2 = Math.max(...points.map(p => p.x));
-    const y1 = -(A * x1 + C) / B;
-    const y2 = -(A * x2 + C) / B;
-    
-    return { A, B, C, r2, worstR2, x1, y1, x2, y2 };
+        const x1 = Math.min(...points.map(p => p.x));
+        const x2 = Math.max(...points.map(p => p.x));
+        const y1 = -(A * x1 + C) / B;
+        const y2 = -(A * x2 + C) / B;
+
+        return { A, B, C, r2, worstR2, x1, y1, x2, y2 };
     },
     /**
      * Finds the intersection line of two planes in 3D space.
@@ -260,65 +260,125 @@ const Geom = {
      * @param {Object} plane2 - Second plane definition
      * @param {Array<number>} plane2.point - Point on the second plane [x, y, z]
      * @param {Array<number>} plane2.normal - Normal vector of the second plane [x, y, z]
-     * @returns {Object} Intersection line definition:
-     *                   - point: A point on the intersection line [x, y, z]
-     *                   - direction: Direction vector of the intersection line [x, y, z]
-     *                   Returns null if planes are parallel
+     * @returns {Object} Intersection line (dx(x-x0), dy(y-y0), dz(z-z0))
+    
      */
-    PlanesIntersection(plane1, plane2) {
+    LineFromIntersectionOfPlanes(plane1, plane2) {
         const [n1x, n1y, n1z] = plane1.normal;
         const [n2x, n2y, n2z] = plane2.normal;
-        
+
         // Direction of intersection line is cross product of normals
         const direction = [
             n1y * n2z - n1z * n2y,
             n1z * n2x - n1x * n2z,
             n1x * n2y - n1y * n2x
         ];
-        
+
         // Check if planes are parallel
         const directionMagnitude = Math.sqrt(
-            direction[0] * direction[0] + 
-            direction[1] * direction[1] + 
+            direction[0] * direction[0] +
+            direction[1] * direction[1] +
             direction[2] * direction[2]
         );
-        
+
         if (directionMagnitude < 1e-10) {
             return null; // Planes are parallel
         }
-        
+
         // Normalize direction vector
         direction[0] /= directionMagnitude;
         direction[1] /= directionMagnitude;
         direction[2] /= directionMagnitude;
-        
-        // Find a point on the intersection line
-        // Using the method from: http://geomalgorithms.com/a05-_intersect-1.html
+
+        // Find a point on the line of intersection
         const [p1x, p1y, p1z] = plane1.point;
         const [p2x, p2y, p2z] = plane2.point;
-        
-        const n1n1 = n1x * n1x + n1y * n1y + n1z * n1z;
-        const n2n2 = n2x * n2x + n2y * n2y + n2z * n2z;
-        const n1n2 = n1x * n2x + n1y * n2y + n1z * n2z;
-        
+
+        // Solve for a point on the line by solving the system of equations
+        // n1 · (x, y, z) = n1 · p1
+        // n2 · (x, y, z) = n2 · p2
         const d1 = n1x * p1x + n1y * p1y + n1z * p1z;
         const d2 = n2x * p2x + n2y * p2y + n2z * p2z;
-        
-        const det = n1n1 * n2n2 - n1n2 * n1n2;
-        
-        const c1 = (d1 * n2n2 - d2 * n1n2) / det;
-        const c2 = (d2 * n1n1 - d1 * n1n2) / det;
-        
-        const point = [
-            c1 * n1x + c2 * n2x,
-            c1 * n1y + c2 * n2y,
-            c1 * n1z + c2 * n2z
-        ];
-        
-        return { point, direction };
-    }
-    
 
+        // Use the cross product of the normals to find a direction perpendicular to both
+        const cross = [
+            n1y * n2z - n1z * n2y,
+            n1z * n2x - n1x * n2z,
+            n1x * n2y - n1y * n2x
+        ];
+
+        // Find a point on the line by solving for one coordinate (e.g., z = 0)
+        let x0, y0, z0;
+        if (Math.abs(cross[2]) > 1e-10) { // If z-component of cross product is non-zero
+            z0 = 0;
+            const matrix = new Matrix([
+                [n1x, n1y],
+                [n2x, n2y]
+            ]);
+            const constants = [d1, d2];
+            const [x, y] = matrix.Solve(constants);
+            x0 = x;
+            y0 = y;
+        } else if (Math.abs(cross[1]) > 1e-10) { // If y-component of cross product is non-zero
+            y0 = 0;
+            const matrix = new Matrix([
+                [n1x, n1z],
+                [n2x, n2z]
+            ]);
+            const constants = [d1, d2];
+            const [x, z] = matrix.Solve(constants);
+            x0 = x;
+            z0 = z;
+        } else { // If x-component of cross product is non-zero
+            x0 = 0;
+            const matrix = new Matrix([
+                [n1y, n1z],
+                [n2y, n2z]
+            ]);
+            const constants = [d1, d2];
+            const [y, z] = matrix.Solve(constants);
+            y0 = y;
+            z0 = z;
+            x0 = x;
+            y0 = y;
+        }
+
+        return { direction, point: [x0, y0, z0] };
+    },
+    /**
+     * Calculates the intersection point of two lines in a plane.
+     *
+     * @param {{x0: number, y0: number, x1: number, y1: number}} l0 - The first line represented by two points (x0, y0) and (x1, y1).
+     * @param {{x0: number, y0: number, x1: number, y1: number}} l1 - The second line represented by two points (x0, y0) and (x1, y1).
+     * @returns {{x: number, y: number, l: number}} The intersection point of the two lines, where `x` and `y` are the coordinates of the intersection,
+     * and `l` is the parameter of the intersection along the second line (l1).
+     */
+    PointFromIntersectionOfLinesInPlane(l0, l1) {
+        const { x0: x0_0, y0: y0_0, x1: x1_0, y1: y1_0 } = l0;
+        const { x0: x0_1, y0: y0_1, x1: x1_1, y1: y1_1 } = l1;
+
+        const a1 = y1_0 - y0_0;
+        const b1 = x0_0 - x1_0;
+        const c1 = a1 * x0_0 + b1 * y0_0;
+
+        const a2 = y1_1 - y0_1;
+        const b2 = x0_1 - x1_1;
+        const c2 = a2 * x0_1 + b2 * y0_1;
+
+        const determinant = a1 * b2 - a2 * b1;
+
+        if (Math.abs(determinant) < 1e-10) {
+            throw new Error("Lines are parallel and do not intersect.");
+        }
+
+        const x = (b2 * c1 - b1 * c2) / determinant;
+        const y = (a1 * c2 - a2 * c1) / determinant;
+
+        const l = ((x - x0_1) * (x1_1 - x0_1) + (y - y0_1) * (y1_1 - y0_1)) /
+                  ((x1_1 - x0_1) ** 2 + (y1_1 - y0_1) ** 2);
+
+        return { x, y, l };
+    }
 };
 
 

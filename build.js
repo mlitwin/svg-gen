@@ -25,7 +25,13 @@ function longitude(context, i, n, R) {
     };
     const perspective = {
         eye: context.eye,
-        transform: Matrix.Identity(4).Transform(transform)
+        transform: Matrix.Identity(4).Transform(transform),
+        clip: {
+            plane: {
+                point: [0, 0, 0],
+                normal: [-context.eye.x, -context.eye.y, -context.eye.z]
+            }
+        }
     }
 
     return context.s.circle(opts).withPerspective(perspective);

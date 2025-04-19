@@ -12,6 +12,42 @@ function extractElements(elements, opts) {
     return ret;
 }
 
+function clip(perspective) {
+    const {eye, transform, clip} = perspective;
+    if(!clip || !clip.plane) {
+        return null;
+    }
+
+    // Transform the XY plane
+    const transformedXYPoint = transform.Mult([0, 0, 0, 1]);
+    const transformedXYNormal = transform.Mult([0, 0, 1, 0]);
+
+    // XY plane after transform
+    const transformedXYPlane = {
+        point: [transformedXYPoint[0], transformedXYPoint[1], transformedXYPoint[2]],
+        normal: [transformedXYNormal[0], transformedXYNormal[1], transformedXYNormal[2]]
+    };
+    const intersectionLine = Geom.LineFromIntersectionOfPlanes(clip.plane, transformedXYPlane);
+  
+    const p0 = intersectionLine.point;
+    const p1 = [
+        pointOnLine[0] + intersectionLine.direction[0],
+        pointOnLine[1] + intersectionLine.direction[1],
+        pointOnLine[2] + intersectionLine.direction[2]
+    ];
+
+
+    // Project the three points onto the XY plane
+    const p0XY = Geom.PerspectiveXYProjection(pointOnLine, eye);
+    const p1XY = Geom.PerspectiveXYProjection(secondPointOnLine, eye);
+    const directionalPoint = Geom.PerspectiveXYProjection(clip.point, eye);
+
+    // Create an SVG clip-path for the half-plane
+    const R = 10000; // A large value to ensure the half-plane is covered
+
+    return pathData;
+}
+
 /**
  * Creates an SVG ellipse element based on the given perspective and options.
  * The function supports both circle and ellipse geometries, converting circles
@@ -54,14 +90,21 @@ function elementFromCircleOrEllipse(perspective) {
     const rx = ellipse.rx;
     const ry = ellipse.ry;
 
-    return this.s.ellipse({
+    const clipPath = clip(perspective);
+
+    const newOpts = {
         cx,
         cy,
         rx,
         ry,
         transform: `rotate(${ellipse.theta * 180 / Math.PI} ${cx} ${cy})`,
        ...opts
-    });
+    };
+    if (clipPath) {
+        newOpts["clip-path"] = clipPath;
+    }
+
+    return this.s.ellipse(newOpts);
 }
 
 export { elementFromCircleOrEllipse}

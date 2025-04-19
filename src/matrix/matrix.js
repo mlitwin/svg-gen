@@ -301,6 +301,29 @@ Matrix.SVDSolve = function (svd, B) {
     return V.Mult(S_inv).Mult(U.Transpose()).Mult(B);
 };
 
+/**
+ * Solves the linear equation A * X = B using Singular Value Decomposition (SVD).
+ * 
+ * This method computes the solution vector X for the equation A * X = B by 
+ * leveraging the SVD decomposition of the matrix A. It internally calls 
+ * `Matrix.SVDSolve` to perform the computation.
+ * 
+ * @method Solve
+ * @memberof Matrix
+ * @param {Array<number>} B - The right-hand side of the equation A * X = B.
+ * @returns {Array<number>} The solution vector X that satisfies A * X = B.
+ * 
+ * @example
+ * const A = new Matrix("1 2 3\n4 5 6\n7 8 9");
+ * const B = [1, 0, 0];
+ * const X = A.Solve(B);
+ * console.log("Solution X:", X);
+ */
+Matrix.prototype.Solve = function (B) {
+    const svd = this.SVD();
+    return Matrix.SVDSolve(svd, B);
+}
+
 Matrix.prototype.Transform = function (transformation) {
     let result = this;
     transformation.reverse().forEach(t => {
