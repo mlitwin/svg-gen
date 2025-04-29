@@ -108,15 +108,15 @@ function elementFromCircleOrEllipse(perspective) {
         delete geomOpts.r;
     }
 
-    const { ellipse, regression } = Geom.EllipseWithPerspective(geomOpts.cx, geomOpts.cy, geomOpts.rx, geomOpts.ry, perspective.eye, perspective.transform);
+    const { ellipse, regression, line} = Geom.EllipseWithPerspective(geomOpts.cx, geomOpts.cy, geomOpts.rx, geomOpts.ry, perspective.eye, perspective.transform);
 
-    if (regression.worstR2 < 0.99) {
-        const { x1, y1, x2, y2 } = regression;
+    if (line.errorSize < 0.99) {
+        const { x0, y0, x1, y1 } = line.segment;
         return this.s.line({
-            x1,
-            y1,
-            x2,
-            y2,
+            x1: x0,
+            y1: y0,
+            x2: x1,
+            y2: y1,
             ...opts
         });
     }

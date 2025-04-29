@@ -142,13 +142,13 @@ const Geom = {
         const transformed = transform.Mult(points);
 
         const perspectivePoints = Geom.PerspectiveXYProjection(eye, transformed);
-        const regression = Geom.LinearRegression(perspectivePoints);
+        const line = Geom.SegmentFromPoints(perspectivePoints);
 
 
         const standard = Geom.EllipseFromPoints(perspectivePoints);
         const ellipse = Geom.EllipseStandardForm(standard);
 
-        return { ellipse, regression };
+        return { ellipse, line };
     },
     /**
      * Projects a set of 3D affine points onto a 2D plane using a projective transformation.
@@ -173,81 +173,6 @@ const Geom = {
         }
 
         return projectedPoints;
-    },
-    /**
-     * Performs a linear regression on a set of points to determine the best-fit line.
-     * The resulting line equation is in the form Ax + By + C = 0, and the function
-     * also calculates the coefficient of determination (r²) to indicate the goodness of fit.
-     *
-     * @param {Array<{x: number, y: number}>} points - An array of points, where each point is an object with `x` and `y` properties.
-     * @returns {{A: number, B: number, C: number, r2: number}} An object containing:
-     *   - `A` (number): The coefficient for x in the line equation.
-     *   - `B` (number): The coefficient for y in the line equation.
-     *   - `C` (number): The constant term in the line equation.
-     *   - `r2` (number): The coefficient of determination, indicating the goodness of fit.
-     *   - `worstR2` (number): Worst r^2 residual for the points, to check if the points are linear.
-     */
-    LinearRegression(points) {
-        const n = points.length;
-        if (n < 2) {
-            throw new Error("At least two points are required for linear regression.");
-        }
-
-        let sumX = 0, sumY = 0, sumXY = 0, sumX2 = 0, sumY2 = 0;
-
-        for (const { x, y } of points) {
-            sumX += x;
-            sumY += y;
-            sumXY += x * y;
-            sumX2 += x * x;
-            sumY2 += y * y;
-        }
-
-        const meanX = sumX / n;
-        const meanY = sumY / n;
-
-        const denominatorX = sumX2 - n * meanX ** 2;
-        const denominatorY = sumY2 - n * meanY ** 2;
-
-        if (denominatorX === 0 && denominatorY === 0) {
-            throw new Error("All points are identical; linear regression is undefined.");
-        }
-
-        let A, B, C;
-
-        if (denominatorX >= denominatorY) {
-            const slope = (sumXY - n * meanX * meanY) / denominatorX;
-            const intercept = meanY - slope * meanX;
-            A = -slope;
-            B = 1;
-            C = -intercept;
-        } else {
-            const slope = (sumXY - n * meanX * meanY) / denominatorY;
-            const intercept = meanX - slope * meanY;
-            A = 1;
-            B = -slope;
-            C = -intercept;
-        }
-
-        const ssTotal = sumY2 - n * meanY ** 2;
-        const ssResidual = points.reduce((sum, { x, y }) => {
-            const predictedY = -(A * x + C) / B;
-            return sum + (y - predictedY) ** 2;
-        }, 0);
-
-        const r2 = ssTotal === 0 ? 1 : 1 - ssResidual / ssTotal;
-        const worstR2 = points.reduce((worst, { x, y }) => {
-            const predictedY = -(A * x + C) / B;
-            const residual = Math.abs(y - predictedY);
-            return Math.max(worst, residual);
-        }, 0);
-
-        const x1 = Math.min(...points.map(p => p.x));
-        const x2 = Math.max(...points.map(p => p.x));
-        const y1 = -(A * x1 + C) / B;
-        const y2 = -(A * x2 + C) / B;
-
-        return { A, B, C, r2, worstR2, x1, y1, x2, y2 };
     },
     /**
      * Finds the intersection line of two planes in 3D space.
@@ -464,6 +389,60 @@ const Geom = {
         ];
 
         return perpendicularPoint;
+    },
+    /**
+     * Generates a best-fit line segment from an array of points.
+     *
+     * @param {Array<{x: number, y: number}>} points - An array of points, where each point is an object with `x` and `y` coordinates.
+     * @returns {{segment: {x0: number, y0: number, x1: number, y1: number}, goodnessOfFit: number}} 
+     *          An object containing the best-fit line segment and its goodness of fit.
+     *          - `segment`: An object representing the line segment with start point (`x0`, `y0`) and end point (`x1`, `y1`).
+     *          - `errorSize`: A number representing how well the line segment fits the given points.
+     */
+    SegmentFromPoints(points) {
+        if (points.length < 2) {
+            throw new Error("At least two points are required to calculate a segment.");
+        }
+
+        // Calculate the bounding box
+        const xMin = Math.min(...points.map(p => p.x));
+        const xMax = Math.max(...points.map(p => p.x));
+        const yMin = Math.min(...points.map(p => p.y));
+        const yMax = Math.max(...points.map(p => p.y));
+
+        // Define the two diagonals
+        const diagonal1 = { x0: xMin, y0: yMin, x1: xMax, y1: yMax };
+        const diagonal2 = { x0: xMin, y0: yMax, x1: xMax, y1: yMin };
+
+        // Helper function to calculate perpendicular distance from a point to a line
+        const perpendicularDistance = (point, line) => {
+            const { x0, y0, x1, y1 } = line;
+
+            // Handle vertical line
+            if (x0 === x1) {
+                return Math.abs(point.x - x0);
+            }
+
+            // Handle horizontal line
+            if (y0 === y1) {
+                return Math.abs(point.y - y0);
+            }
+
+            const numerator = Math.abs((y1 - y0) * point.x - (x1 - x0) * point.y + x1 * y0 - y1 * x0);
+            const denominator = Math.sqrt((y1 - y0) ** 2 + (x1 - x0) ** 2);
+            return numerator / denominator;
+        };
+
+        // Calculate the error size for each diagonal
+        const errorSize1 = Math.max(...points.map(p => perpendicularDistance(p, diagonal1)));
+        const errorSize2 = Math.max(...points.map(p => perpendicularDistance(p, diagonal2)));
+
+        // Return the diagonal with the smaller error size
+        if (errorSize1 <= errorSize2) {
+            return { segment: diagonal1, errorSize: errorSize1 };
+        } else {
+            return { segment: diagonal2, errorSize: errorSize2 };
+        }
     }
 };
 
