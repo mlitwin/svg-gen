@@ -143,11 +143,8 @@ function elementFromCircleOrEllipse(perspective) {
     ]);
 
     const clip = clipPolygon({x:-300, y:-300, width: 600, height: 600}, perspective);
-
     const clipPath = makeClipPath(clip, inverseTransform);
-    const items = [];
     
-
     const newOpts = {
         cx,
         cy,
@@ -159,17 +156,9 @@ function elementFromCircleOrEllipse(perspective) {
 
     if (clipPath) {
         newOpts["clip-path"] = clipPath;
-        
-        const points = clip.map((point) => {
-            return `${point.x} ${point.y}`;
-        }).join(",");
-
     }
-    items.push(this.s.ellipse(newOpts));
-
-    const g = this.s.g({}, items);
-
-    return g;
+    
+    return this.s.ellipse(newOpts);
 }
 
 export { elementFromCircleOrEllipse }
