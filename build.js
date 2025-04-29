@@ -21,7 +21,7 @@ function longitude(context, i, n, R) {
     const opts = {
         cx: 0, cy: 0, r, fill: "none",
         stroke: "black",
-        'stroke-width': i == 0 ? 2: 1
+        'stroke-width': i == 0 ? 2 : 1
     };
     const perspective = {
         eye: context.eye,
@@ -41,25 +41,32 @@ function latitude(context, i, n, R) {
     const l = i * (Math.PI / 2) / n;
 
     const transform = [
-
+        {
+            op: "Rotate",
+            args: { axes: "Z", angle: context.skew }
+        },
         {
             op: "Rotate",
             args: { axes: "Y", angle: l }
         },
-        {
-            op: "Rotate",
-            args: { axes: "X", angle: context.skew }
-        },
+
+
     ];
 
     const opts = {
         cx: 0, cy: 0, r: R, fill: "none",
         stroke: "black",
-        'stroke-width': i === n ? 2: 1
+        'stroke-width': i === n ? 2 : 1
     };
     const perspective = {
         eye: context.eye,
-        transform: Matrix.Identity(4).Transform(transform)
+        transform: Matrix.Identity(4).Transform(transform),
+        clip: {
+            plane: {
+                point: [0, 0, 0],
+                normal: [-context.eye.x, -context.eye.y, -context.eye.z]
+            }
+        }
     }
 
     return context.s.circle(opts).withPerspective(perspective);
@@ -82,16 +89,16 @@ function makeSphere(context) {
         ...makeRange(-16, 16).map(i => {
             return longitude(context, i, 16, 250);
         }),
-        ...makeRange(0, 16).map(i => {
+        ...makeRange(-16, 16).map(i => {
             return latitude(context, i, 16, 250);
         }),
-   ]);
+    ]);
 
     return svg;
 }
 
 const context = {
-    eye: { x: -50, y: 0, z: -2000 },
+    eye: { x: 0, y: 0, z: -2000 },
     s: new svgGen({}),
     skew: 0
 }

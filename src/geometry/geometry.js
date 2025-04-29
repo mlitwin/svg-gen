@@ -161,7 +161,6 @@ const Geom = {
         if (affinePoints.m !== 4) {
             throw new Error("Affine points matrix must have 4 rows.");
         }
-        //console.log("PerspectiveXYProjection affinePoints", affinePoints)
         const projectedPoints = [];
 
         for (let j = 0; j < affinePoints.n; j++) {
@@ -339,8 +338,6 @@ const Geom = {
             const [y, z] = matrix.Solve(constants);
             y0 = y;
             z0 = z;
-            x0 = x;
-            y0 = y;
         }
 
         return { direction, point: [x0, y0, z0] };
@@ -368,7 +365,7 @@ const Geom = {
         const determinant = a1 * b2 - a2 * b1;
 
         if (Math.abs(determinant) < 1e-10) {
-            throw new Error("Lines are parallel and do not intersect.");
+            return null; // Lines are parallel or coincident
         }
 
         const x = (b2 * c1 - b1 * c2) / determinant;
@@ -410,13 +407,15 @@ const Geom = {
             }
 
             // Check if the edge intersects the line
-            if (currentSide * nextSide < 0) {
-                const intersection = Geom.PointFromIntersectionOfLinesInPlane(
-                    { x0, y0, x1, y1 },
-                    { x0: current.x, y0: current.y, x1: next.x, y1: next.y }
-                );
-                result.push({ x: intersection.x, y: intersection.y });
-            }
+			const intersection = Geom.PointFromIntersectionOfLinesInPlane(
+				{ x0, y0, x1, y1 },
+				{ x0: current.x, y0: current.y, x1: next.x, y1: next.y }
+			);
+
+			if (intersection && intersection.l >= 0 && intersection.l <= 1) {
+				result.push({ x: intersection.x, y: intersection.y });
+			}
+ 
         }
 
         // Sort the resulting polygon vertices in counter-clockwise order
@@ -432,6 +431,39 @@ const Geom = {
         });
 
         return result;
+    },
+    /**
+     * Calculates the perpendicular point on a plane from a given point in 3D space.
+     *
+     * @param {number[]} point - The coordinates of the point in 3D space as [x, y, z].
+     * @param {{point: number[], normal: number[]}} plane - The plane defined by a point on the plane 
+     *                                                      ([x, y, z]) and its normal vector ([x, y, z]).
+     * @returns {number[]} The coordinates of the perpendicular point on the plane as [x, y, z].
+     */
+    PerpendicularPointOnPlane(point, plane) {
+        const [px, py, pz] = point;
+        const [planePointX, planePointY, planePointZ] = plane.point;
+        const [nx, ny, nz] = plane.normal;
+
+        // Calculate the vector from the point to the plane point
+        const vectorToPlane = [
+            px - planePointX,
+            py - planePointY,
+            pz - planePointZ
+        ];
+
+        // Calculate the distance from the point to the plane along the normal
+        const distance = (vectorToPlane[0] * nx + vectorToPlane[1] * ny + vectorToPlane[2] * nz) /
+                 (nx ** 2 + ny ** 2 + nz ** 2);
+
+        // Calculate the perpendicular point on the plane
+        const perpendicularPoint = [
+            px - distance * nx,
+            py - distance * ny,
+            pz - distance * nz
+        ];
+
+        return perpendicularPoint;
     }
 };
 

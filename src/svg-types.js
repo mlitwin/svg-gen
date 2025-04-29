@@ -380,6 +380,11 @@ const svgTypes = {
         options: [
             { name: "d" }
         ]
+    },
+    polygon: {
+        options: [
+            { name: "points" }
+        ]
     }
 };
 

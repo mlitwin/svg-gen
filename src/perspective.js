@@ -1,4 +1,5 @@
-import Geom  from "./geometry/geometry.js";
+import { Matrix } from "./matrix/matrix.js";
+import Geom from "./geometry/geometry.js";
 
 function extractElements(elements, opts) {
     const ret = {}
@@ -12,40 +13,75 @@ function extractElements(elements, opts) {
     return ret;
 }
 
-function clip(perspective) {
-    const {eye, transform, clip} = perspective;
-    if(!clip || !clip.plane) {
+function clipPolygon(viewBox, perspective) {
+    const { eye, transform, clip } = perspective;
+    const viewBoxVertices = [
+        { x: viewBox.x, y: viewBox.y },
+        { x: viewBox.x + viewBox.width, y: viewBox.y },
+        { x: viewBox.x + viewBox.width, y: viewBox.y + viewBox.height },
+        { x: viewBox.x, y: viewBox.y + viewBox.height }
+    ];
+
+    if (!clip || !clip.plane) {
         return null;
     }
+    const clipPlane = clip.plane;
+    const clipPoint = clipPlane.point;
+    const clipNormal = clipPlane.normal;
+    const sidePoint = [clipPoint[0] + clipNormal[0], clipPoint[1] + clipNormal[1], clipPoint[2] + clipNormal[2]];
 
     // Transform the XY plane
-    const transformedXYPoint = transform.Mult([0, 0, 0, 1]);
-    const transformedXYNormal = transform.Mult([0, 0, 1, 0]);
+    const transformedXYPointO = transform.Mult([0, 0, 0, 1]);
+    const transformedXYPointX = transform.Mult([1, 0, 0, 1]);
+    const transformedXYPointY = transform.Mult([0, 1, 0, 1]);
+
+    const dX = [transformedXYPointX[0] - transformedXYPointO[0], transformedXYPointX[1] - transformedXYPointO[1], transformedXYPointX[2] - transformedXYPointO[2]];
+    const dY = [transformedXYPointY[0] - transformedXYPointO[0], transformedXYPointY[1] - transformedXYPointO[1], transformedXYPointY[2] - transformedXYPointO[2]];
+    const cross = [
+        dX[1] * dY[2] - dX[2] * dY[1],
+        dX[2] * dY[0] - dX[0] * dY[2],
+        dX[0] * dY[1] - dX[1] * dY[0]
+    ];
+    const transformedXYNormal = cross;
 
     // XY plane after transform
     const transformedXYPlane = {
-        point: [transformedXYPoint[0], transformedXYPoint[1], transformedXYPoint[2]],
+        point: [transformedXYPointO[0], transformedXYPointO[1], transformedXYPointO[2]],
         normal: [transformedXYNormal[0], transformedXYNormal[1], transformedXYNormal[2]]
     };
-    const intersectionLine = Geom.LineFromIntersectionOfPlanes(clip.plane, transformedXYPlane);
-  
-    const p0 = intersectionLine.point;
-    const p1 = [
-        pointOnLine[0] + intersectionLine.direction[0],
-        pointOnLine[1] + intersectionLine.direction[1],
-        pointOnLine[2] + intersectionLine.direction[2]
-    ];
+    const intersectionLine = Geom.LineFromIntersectionOfPlanes(clipPlane, transformedXYPlane);
+    if (!intersectionLine) {
+        return null;
+    }
 
+    const sidePointXY = Geom.PerpendicularPointOnPlane(sidePoint, transformedXYPlane);
 
-    // Project the three points onto the XY plane
-    const p0XY = Geom.PerspectiveXYProjection(pointOnLine, eye);
-    const p1XY = Geom.PerspectiveXYProjection(secondPointOnLine, eye);
-    const directionalPoint = Geom.PerspectiveXYProjection(clip.point, eye);
+    const affinePoints = new Matrix([
+        [intersectionLine.point[0], intersectionLine.point[1], intersectionLine.point[2], 1],
+        [intersectionLine.point[0] + intersectionLine.direction[0], intersectionLine.point[1] + intersectionLine.direction[1], intersectionLine.point[2] + intersectionLine.direction[2], 1],
+        [sidePointXY[0], sidePointXY[1], sidePointXY[2], 1],
+    ]).Transpose();
 
-    // Create an SVG clip-path for the half-plane
-    const R = 10000; // A large value to ensure the half-plane is covered
+    const  perspectivePoints =  Geom.PerspectiveXYProjection(eye, affinePoints,);
 
-    return pathData;
+    const line = { x0: perspectivePoints[0].x, y0: perspectivePoints[0].y, x1: perspectivePoints[1].x, y1: perspectivePoints[1].y };
+    const directionalPoint = perspectivePoints[2];
+
+    return Geom.PolygonFromLineIntersectionPolygon(line, directionalPoint, viewBoxVertices);
+}
+
+function makeClipPath(polygon, inverseTransform) {
+    if (!polygon) {
+        return null;
+    }
+    const pathData = polygon.map((point) => {
+        const inversePoint = inverseTransform.Mult([point.x, point.y, 1]);
+     const x = inversePoint[0]
+     const y = inversePoint[1];
+       return `${x}px ${y}px`;
+    }).join(",");
+
+    return `polygon(${pathData}) view-box`;
 }
 
 /**
@@ -72,16 +108,16 @@ function elementFromCircleOrEllipse(perspective) {
         delete geomOpts.r;
     }
 
-    const {ellipse, regression} = Geom.EllipseWithPerspective(geomOpts.cx, geomOpts.cy, geomOpts.rx, geomOpts.ry, perspective.eye, perspective.transform);
+    const { ellipse, regression } = Geom.EllipseWithPerspective(geomOpts.cx, geomOpts.cy, geomOpts.rx, geomOpts.ry, perspective.eye, perspective.transform);
 
     if (regression.worstR2 < 0.99) {
-        const {x1, y1, x2, y2} = regression;
+        const { x1, y1, x2, y2 } = regression;
         return this.s.line({
             x1,
             y1,
             x2,
             y2,
-           ...opts
+            ...opts
         });
     }
 
@@ -90,7 +126,27 @@ function elementFromCircleOrEllipse(perspective) {
     const rx = ellipse.rx;
     const ry = ellipse.ry;
 
-    const clipPath = clip(perspective);
+    const inverseTransform = Matrix.Identity(3).Transform(
+    [
+        {
+            op: "Translate",
+            args: { vec: [cx, cy, 1] }
+        }, 
+        {
+            op: "Rotate",
+            args: { axes: "Z", angle: -ellipse.theta }
+        },
+        {
+            op: "Translate",
+            args: { vec: [-cx, -cy, 1] }
+        },
+    ]);
+
+    const clip = clipPolygon({x:-300, y:-300, width: 600, height: 600}, perspective);
+
+    const clipPath = makeClipPath(clip, inverseTransform);
+    const items = [];
+    
 
     const newOpts = {
         cx,
@@ -98,13 +154,22 @@ function elementFromCircleOrEllipse(perspective) {
         rx,
         ry,
         transform: `rotate(${ellipse.theta * 180 / Math.PI} ${cx} ${cy})`,
-       ...opts
+        ...opts
     };
+
     if (clipPath) {
         newOpts["clip-path"] = clipPath;
-    }
+        
+        const points = clip.map((point) => {
+            return `${point.x} ${point.y}`;
+        }).join(",");
 
-    return this.s.ellipse(newOpts);
+    }
+    items.push(this.s.ellipse(newOpts));
+
+    const g = this.s.g({}, items);
+
+    return g;
 }
 
-export { elementFromCircleOrEllipse}
+export { elementFromCircleOrEllipse }
