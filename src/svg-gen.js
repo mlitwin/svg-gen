@@ -70,7 +70,7 @@ function svgGen(options) {
 
 function treeWalker(node, context, handlers) {
     const { open, close } = handlers;
-    const renderNode = node.renderForm(context);
+    const renderNode = node.renderForm ? node.renderForm(context): node;
     const newContext = { ...context, depth: context.depth + 1 };
     if(node.type === "svg") {
         const viewBoxOption = renderNode.options.viewBox;
@@ -107,19 +107,24 @@ export function parseToText(node) {
             if (typeof n === "string") {
                 return n;
             }
-            return [
+            let val = [
                 `<${n.type}`,
                 ...n.optionsList.map(opt => {
                     return `${opt.name}="${opt.value}"`;
-                }),
-                '>'
+                })
             ].join(" ");
+            if (n.children) {
+                val += '>';
+            } else {
+                val += '/>';
+            }
+            return val;
         },
         close: (n) => {
             if (typeof n === "string") {
                 return '';
             }
-            return `</${n.type}>`;
+            return n.children ? `</${n.type}>` : "";
         }
     }).trim();
 }
