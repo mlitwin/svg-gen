@@ -37,8 +37,8 @@ node.prototype.With = function (opts) {
 node.prototype.renderForm = function (renderContext) {
     const opts = this.with_opts;
 
-    if(opts) {
-        return this.withPerspective(opts, renderContext);
+    if(opts?.perspective) {
+        return this.withPerspective(opts.perspective, renderContext);
     }
 
     return this;

@@ -34,7 +34,7 @@ function longitude(context, i, n, R) {
         }
     }
 
-    return context.s.circle(opts).With(perspective);
+    return context.s.circle(opts).With({perspective});
 }
 
 function latitude(context, i, n, R) {
@@ -69,7 +69,7 @@ function latitude(context, i, n, R) {
         }
     }
 
-    return context.s.circle(opts).With(perspective);
+    return context.s.circle(opts).With({perspective});
 }
 
 function makeRange(first, last) {
@@ -86,19 +86,12 @@ function makeSphere(context) {
         height: 600,
         viewBox: "-300 -300 600 600"
     }, [
-        
         ...makeRange(-16, 16).map(i => {
             return longitude(context, i, 16, 250);
         }),
         ...makeRange(-16, 16).map(i => {
             return latitude(context, i, 16, 250);
         }),
-        
-       /*
-        ...makeRange(-16, -16).map(i => {
-            return latitude(context, i, 16, 250);
-        }),
-        */
     ]);
 
     return svg;
