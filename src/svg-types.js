@@ -23,78 +23,58 @@ const allElementsOptions = [
 ];
 
 const svgTypes = {
-    svg: {
-        options: [
-            { name: "width", default: "100" },
-            { name: "height", default: "100" },
-            { name: "viewBox", default: "0 0 100 100" },
-            { name: "xmlns", default: "http://www.w3.org/2000/svg" }
-        ]
-    },
-    g: { options: [] },
-    defs: { options: [] },
-    symbol: { options: [] },
-    use: { options: [] },
-    image: {
+    a: {
         options: [
             { name: "href" },
-            { name: "x" },
-            { name: "y" },
-            { name: "width" },
-            { name: "height" }
-        ]
-    },
-    text: {
-        options: [
-            { name: "x" },
-            { name: "y" },
-            { name: "dx" },
-            { name: "dy" },
-            { name: "rotate" },
-            { name: "textLength" },
-            { name: "lengthAdjust" }
-        ]
-    },
-    tspan: {
-        options: [
-            { name: "x" },
-            { name: "y" },
-            { name: "dx" },
-            { name: "dy" },
-            { name: "rotate" },
-            { name: "textLength" },
-            { name: "lengthAdjust" }
-        ]
-    },
-    tref: { options: [] },
-    textPath: {
-        options: [
-            { name: "href" },
-            { name: "startOffset" },
-            { name: "method" },
-            { name: "spacing" }
+            { name: "target" }
         ]
     },
     altGlyph: { options: [] },
     altGlyphDef: { options: [] },
     altGlyphItem: { options: [] },
-    glyphRef: { options: [] },
-    marker: {
+    animate: {
         options: [
-            { name: "refX" },
-            { name: "refY" },
-            { name: "markerWidth" },
-            { name: "markerHeight" },
-            { name: "orient" }
+            { name: "attributeName" },
+            { name: "from" },
+            { name: "to" },
+            { name: "dur" },
+            { name: "repeatCount" }
         ]
     },
-    pattern: {
+    animateColor: {
         options: [
-            { name: "x" },
-            { name: "y" },
-            { name: "width" },
-            { name: "height" },
-            { name: "patternUnits" }
+            { name: "attributeName" },
+            { name: "from" },
+            { name: "to" },
+            { name: "dur" },
+            { name: "repeatCount" }
+        ]
+    },
+    animateMotion: {
+        options: [
+            { name: "path" },
+            { name: "keyPoints" },
+            { name: "keyTimes" },
+            { name: "rotate" },
+            { name: "dur" },
+            { name: "repeatCount" }
+        ]
+    },
+    animateTransform: {
+        options: [
+            { name: "attributeName" },
+            { name: "type" },
+            { name: "from" },
+            { name: "to" },
+            { name: "dur" },
+            { name: "repeatCount" }
+        ]
+    },
+    circle: {
+        options: [
+            { name: "cx" },
+            { name: "cy" },
+            { name: "r" }
         ]
     },
     clipPath: {
@@ -102,22 +82,21 @@ const svgTypes = {
             { name: "clipPathUnits" }
         ]
     },
-    mask: {
+    cursor: {
         options: [
             { name: "x" },
             { name: "y" },
-            { name: "width" },
-            { name: "height" },
-            { name: "maskUnits" }
+            { name: "xlink:href" }
         ]
     },
-    filter: {
+    defs: { options: [] },
+    desc: { options: [] },
+    ellipse: {
         options: [
-            { name: "x" },
-            { name: "y" },
-            { name: "width" },
-            { name: "height" },
-            { name: "filterUnits" }
+            { name: "cx" },
+            { name: "cy" },
+            { name: "rx" },
+            { name: "ry" },
         ]
     },
     feBlend: {
@@ -238,81 +217,13 @@ const svgTypes = {
             { name: "type" }
         ]
     },
-    cursor: {
+    filter: {
         options: [
             { name: "x" },
             { name: "y" },
-            { name: "xlink:href" }
-        ]
-    },
-    a: {
-        options: [
-            { name: "href" },
-            { name: "target" }
-        ]
-    },
-    view: {
-        options: [
-            { name: "viewBox" },
-            { name: "preserveAspectRatio" }
-        ]
-    },
-    script: {
-        options: [
-            { name: "href" },
-            { name: "type" }
-        ]
-    },
-    animate: {
-        options: [
-            { name: "attributeName" },
-            { name: "from" },
-            { name: "to" },
-            { name: "dur" },
-            { name: "repeatCount" }
-        ]
-    },
-    set: {
-        options: [
-            { name: "attributeName" },
-            { name: "to" },
-            { name: "begin" },
-            { name: "dur" },
-            { name: "repeatCount" }
-        ]
-    },
-    animateMotion: {
-        options: [
-            { name: "path" },
-            { name: "keyPoints" },
-            { name: "keyTimes" },
-            { name: "rotate" },
-            { name: "dur" },
-            { name: "repeatCount" }
-        ]
-    },
-    animateColor: {
-        options: [
-            { name: "attributeName" },
-            { name: "from" },
-            { name: "to" },
-            { name: "dur" },
-            { name: "repeatCount" }
-        ]
-    },
-    animateTransform: {
-        options: [
-            { name: "attributeName" },
-            { name: "type" },
-            { name: "from" },
-            { name: "to" },
-            { name: "dur" },
-            { name: "repeatCount" }
-        ]
-    },
-    mpath: {
-        options: [
-            { name: "href" }
+            { name: "width" },
+            { name: "height" },
+            { name: "filterUnits" }
         ]
     },
     font: {
@@ -325,31 +236,110 @@ const svgTypes = {
             { name: "vert-adv-y" }
         ]
     },
+    foreignObject: {
+        options: [
+            { name: "x" },
+            { name: "y" },
+            { name: "width" },
+            { name: "height" }
+        ]
+    },
+    g: { options: [] },
     glyph: {
         options: [
             { name: "d" },
             { name: "horiz-adv-x" }
         ]
     },
+    glyphRef: { options: [] },
+    image: {
+        options: [
+            { name: "href" },
+            { name: "x" },
+            { name: "y" },
+            { name: "width" },
+            { name: "height" }
+        ]
+    },
+    line: {
+        options: [
+            { name: "x1" },
+            { name: "y1" },
+            { name: "x2" },
+            { name: "y2" }
+        ]
+    },
+    linearGradient: {
+        options: [
+            { name: "x1" },
+            { name: "y1" },
+            { name: "x2" },
+            { name: "y2" },
+            { name: "gradientUnits" }
+        ]
+    },
+    marker: {
+        options: [
+            { name: "refX" },
+            { name: "refY" },
+            { name: "markerWidth" },
+            { name: "markerHeight" },
+            { name: "orient" }
+        ]
+    },
+    mask: {
+        options: [
+            { name: "x" },
+            { name: "y" },
+            { name: "width" },
+            { name: "height" },
+            { name: "maskUnits" }
+        ]
+    },
+    metadata: { options: [] },
     missingGlyph: {
         options: [
             { name: "d" },
             { name: "horiz-adv-x" }
         ]
     },
-    circle: {
+    mpath: {
         options: [
-            { name: "cx" },
-            { name: "cy" },
-            { name: "r" }
+            { name: "href" }
         ]
     },
-    ellipse: {
+    path: {
+        options: [
+            { name: "d" }
+        ]
+    },
+    pattern: {
+        options: [
+            { name: "x" },
+            { name: "y" },
+            { name: "width" },
+            { name: "height" },
+            { name: "patternUnits" }
+        ]
+    },
+    polygon: {
+        options: [
+            { name: "points" }
+        ]
+    },
+    polyline: {
+        options: [
+            { name: "points" }
+        ]
+    },
+    radialGradient: {
         options: [
             { name: "cx" },
             { name: "cy" },
-            { name: "rx" },
-            { name: "ry" },
+            { name: "r" },
+            { name: "fx" },
+            { name: "fy" },
+            { name: "gradientUnits" }
         ]
     },
     rect: {
@@ -362,22 +352,80 @@ const svgTypes = {
             { name: "ry" }
         ]
     },
-    line: {
+    script: {
         options: [
-            { name: "x1" },
-            { name: "y1" },
-            { name: "x2" },
-            { name: "y2" }
+            { name: "href" },
+            { name: "type" }
         ]
     },
-    path: {
+    set: {
         options: [
-            { name: "d" }
+            { name: "attributeName" },
+            { name: "to" },
+            { name: "begin" },
+            { name: "dur" },
+            { name: "repeatCount" }
         ]
     },
-    polygon: {
+    stop: {
         options: [
-            { name: "points" }
+            { name: "offset" },
+            { name: "stop-color" },
+            { name: "stop-opacity" }
+        ]
+    },
+    style: {
+        options: [
+            { name: "type" }
+        ]
+    },
+    svg: {
+        options: [
+            { name: "width", default: "100" },
+            { name: "height", default: "100" },
+            { name: "viewBox", default: "0 0 100 100" },
+            { name: "xmlns", default: "http://www.w3.org/2000/svg" }
+        ]
+    },
+    switch: { options: [] },
+    symbol: { options: [] },
+    text: {
+        options: [
+            { name: "x" },
+            { name: "y" },
+            { name: "dx" },
+            { name: "dy" },
+            { name: "rotate" },
+            { name: "textLength" },
+            { name: "lengthAdjust" }
+        ]
+    },
+    textPath: {
+        options: [
+            { name: "href" },
+            { name: "startOffset" },
+            { name: "method" },
+            { name: "spacing" }
+        ]
+    },
+    title: { options: [] },
+    tref: { options: [] },
+    tspan: {
+        options: [
+            { name: "x" },
+            { name: "y" },
+            { name: "dx" },
+            { name: "dy" },
+            { name: "rotate" },
+            { name: "textLength" },
+            { name: "lengthAdjust" }
+        ]
+    },
+    use: { options: [] },
+    view: {
+        options: [
+            { name: "viewBox" },
+            { name: "preserveAspectRatio" }
         ]
     }
 };
