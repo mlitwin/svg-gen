@@ -29,12 +29,28 @@ function node(type, spec, options, children, s) {
     return this;
 }
 
-node.prototype.withPerspective = function (opts) {
+node.prototype.With = function (opts) {
+   this.with_opts = opts;
+   return this;
+}
+
+node.prototype.renderForm = function (renderContext) {
+    const opts = this.with_opts;
+
+    if(opts) {
+        return this.withPerspective(opts, renderContext);
+    }
+
+    return this;
+ }
+
+
+node.prototype.withPerspective = function (opts, renderContext) {
     const withPerspective = svgTypes[this.type].withPerspective;
-    if(!withPerspective) {
+    if (!withPerspective) {
         throw new Error(`withPerspective is not defined for ${this.type}`);
     }
-    return withPerspective.call(this, opts)
+    return withPerspective.call(this, opts, renderContext)
 }
 
 
@@ -52,41 +68,60 @@ function svgGen(options) {
     return this;
 }
 
-function textProcessor(depth, node) {
-    const spacing = ' '.repeat(depth * 2);
+function treeWalker(node, context, handlers) {
+    const { open, close } = handlers;
+    const renderNode = node.renderForm(context);
+    const newContext = { ...context, depth: context.depth + 1 };
+    if(node.type === "svg") {
+        const viewBoxOption = renderNode.options.viewBox;
+        if (viewBoxOption) {
+            const [x, y, width, height] = viewBoxOption.split(' ').map(Number);
+            newContext.viewBox = { x, y, width, height };
+        }
+    }
+    const spacing = ' '.repeat(context.depth * 2);
+    let result = '';
 
-    if (typeof node === "string") {
-        return spacing + node + '\n';
+    if (open) {
+        result += spacing + open(renderNode) + '\n';
     }
 
-    function open(n) {
-        return [`<${n.type}`,
-        ...n.optionsList.map(opt => {
-            return `${opt.name}="${opt.value}"`;
-        })].join(" ");
-    }
+    if (renderNode.children) {
+   
 
-    let text = spacing
-    text += open(node);
-
-    if (node.children) {
-        text += '>\n';
-        node.children.forEach(child => {
-            text += textProcessor(depth + 1, child);
+        renderNode.children.forEach(child => {
+            result += treeWalker(child, {...newContext}, handlers);
         });
-        text += spacing + `</${node.type}>`;
-    } else {
-        text += `/>`;
-    }
-    if (depth > 0) {
-        text += '\n';
     }
 
-    return text;
+    if (close) {
+        result += spacing + close(renderNode) + '\n';
+    }
+
+    return result;
 }
 
 export function parseToText(node) {
-    return textProcessor(0, node);
+    return treeWalker(node, {depth: 0}, {
+        open: (n) => {
+            if (typeof n === "string") {
+                return n;
+            }
+            return [
+                `<${n.type}`,
+                ...n.optionsList.map(opt => {
+                    return `${opt.name}="${opt.value}"`;
+                }),
+                '>'
+            ].join(" ");
+        },
+        close: (n) => {
+            if (typeof n === "string") {
+                return '';
+            }
+            return `</${n.type}>`;
+        }
+    }).trim();
 }
 
 export default svgGen;

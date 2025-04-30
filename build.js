@@ -34,7 +34,7 @@ function longitude(context, i, n, R) {
         }
     }
 
-    return context.s.circle(opts).withPerspective(perspective);
+    return context.s.circle(opts).With(perspective);
 }
 
 function latitude(context, i, n, R) {
@@ -69,7 +69,7 @@ function latitude(context, i, n, R) {
         }
     }
 
-    return context.s.circle(opts).withPerspective(perspective);
+    return context.s.circle(opts).With(perspective);
 }
 
 function makeRange(first, last) {

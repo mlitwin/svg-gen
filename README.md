@@ -38,13 +38,13 @@ yields
 
 ## Perspective
 
-## `withPerspective()` Method
+## `With()` Method
 
-The `withPerspective()` method is available for the `circle` and `ellipse` SVG types. This method allows you to create SVG elements with transformations applied based on a given perspective.
+The `With()` method is available for the `circle` and `ellipse` SVG types. This method allows you to create SVG elements with transformations applied based on a given perspective.
 
 ### Usage
 
-The `withPerspective()` method applies a perspective transformation to a `circle` or `ellipse` element. It converts the geometry into an ellipse if necessary and applies rotation and scaling transformations.
+The `With()` method applies a perspective transformation to a `circle` or `ellipse` element. It converts the geometry into an ellipse if necessary and applies rotation and scaling transformations.
 
 #### Parameters
 
@@ -94,7 +94,7 @@ const svg = s.svg({}, [
     ]
 );
 
-    return context.s.circle(opts).withPerspective(perspective);
+    return context.s.circle(opts).With(perspective);
 
 console.debug(parseToText(svg));
 ```

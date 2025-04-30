@@ -342,10 +342,7 @@ const svgTypes = {
             { name: "cx" },
             { name: "cy" },
             { name: "r" }
-        ],
-        withPerspective: function(perspective) {
-            return elementFromCircleOrEllipse.call(this, perspective,);
-        }
+        ]
     },
     ellipse: {
         options: [
@@ -353,10 +350,7 @@ const svgTypes = {
             { name: "cy" },
             { name: "rx" },
             { name: "ry" },
-        ],
-        withPerspective: function(perspective) {
-            return elementFromCircleOrEllipse.call(this, perspective,);
-        }
+        ]
     },
     rect: {
         options: [
@@ -387,5 +381,13 @@ const svgTypes = {
         ]
     }
 };
+
+svgTypes.circle.withPerspective = function(perspective, renderContext) {
+    return elementFromCircleOrEllipse.call(this, perspective, renderContext);
+}
+
+svgTypes.ellipse.withPerspective = function(perspective, renderContext) {
+    return elementFromCircleOrEllipse.call(this, perspective, renderContext);
+}
 
 export {allElementsOptions, svgTypes};

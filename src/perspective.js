@@ -98,7 +98,7 @@ function makeClipPath(polygon, inverseTransform) {
  * @param {number} [opts.ry] - The y-radius of the ellipse (used for ellipses).
  * @returns {Object} An SVG ellipse element with the specified properties and transformations.
  */
-function elementFromCircleOrEllipse(perspective) {
+function elementFromCircleOrEllipse(perspective, renderContext) {
     const opts = JSON.parse(JSON.stringify(this.options));
 
     const geomOpts = extractElements(["cx", "cy", "r", "rx", "ry"], opts);
@@ -108,7 +108,7 @@ function elementFromCircleOrEllipse(perspective) {
         delete geomOpts.r;
     }
 
-    const { ellipse, regression, line} = Geom.EllipseWithPerspective(geomOpts.cx, geomOpts.cy, geomOpts.rx, geomOpts.ry, perspective.eye, perspective.transform);
+    const { ellipse, line} = Geom.EllipseWithPerspective(geomOpts.cx, geomOpts.cy, geomOpts.rx, geomOpts.ry, perspective.eye, perspective.transform);
 
     if (line.errorSize < 0.99) {
         const { x0, y0, x1, y1 } = line.segment;
@@ -142,7 +142,7 @@ function elementFromCircleOrEllipse(perspective) {
         },
     ]);
 
-    const clip = clipPolygon({x:-300, y:-300, width: 600, height: 600}, perspective);
+    const clip = clipPolygon(renderContext.viewBox, perspective);
     const clipPath = makeClipPath(clip, inverseTransform);
     
     const newOpts = {
