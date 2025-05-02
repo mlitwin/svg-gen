@@ -26,12 +26,7 @@ function longitude(context, i, n, R) {
     const perspective = {
         eye: context.eye,
         transform: Matrix.Identity(4).Transform(transform),
-        clip: {
-            plane: {
-                point: [0, 0, 0],
-                normal: [-context.eye.x, -context.eye.y, -context.eye.z]
-            }
-        }
+        clip: context.clip,
     }
 
     return context.s.circle(opts).With({perspective});
@@ -61,12 +56,7 @@ function latitude(context, i, n, R) {
     const perspective = {
         eye: context.eye,
         transform: Matrix.Identity(4).Transform(transform),
-        clip: {
-            plane: {
-                point: [0, 0, 0],
-                normal: [-context.eye.x, -context.eye.y, -context.eye.z]
-            }
-        }
+        clip: context.clip
     }
 
     return context.s.circle(opts).With({perspective});
@@ -100,8 +90,16 @@ function makeSphere(context) {
 }
 
 const Z = -2500;
+const eye = { x: 0, y: 0, z: Z - R*R/Z };
+const eyeNorm = Math.sqrt(eye.x * eye.x + eye.y * eye.y + eye.z * eye.z);
 const context = {
-    eye: { x: 0, y: 0, z: Z - R*R/Z },
+    eye,
+    clip: {
+        plane: {
+            point: [0, 0, 0],
+            normal: [eye.x/eyeNorm, eye.y/eyeNorm, eye.z/eyeNorm]
+        }
+    },
     s: new svgGen({}),
     skew: 0
 }
