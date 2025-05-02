@@ -324,7 +324,6 @@ const Geom = {
             const next = poly[(i + 1) % poly.length];
 
             const currentSide = side(current.x, current.y);
-            const nextSide = side(next.x, next.y);
 
             // Include the current point if it's on the same side as the sidePoint
             if (currentSide * sideOfSidePoint >= 0) {

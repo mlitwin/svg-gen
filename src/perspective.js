@@ -13,14 +13,9 @@ function extractElements(elements, opts) {
     return ret;
 }
 
-
-
-function clipIntersection(ellipse, perspective) {
+function clipXYLine(perspective) {
     const { eye, transform, clip } = perspective;
 
-    if (!clip || !clip.plane) {
-        return null;
-    }
     const clipPlane = clip.plane;
     const clipPoint = clipPlane.point;
     const clipNormal = clipPlane.normal;
@@ -45,6 +40,7 @@ function clipIntersection(ellipse, perspective) {
         point: [transformedXYPointO[0], transformedXYPointO[1], transformedXYPointO[2]],
         normal: [transformedXYNormal[0], transformedXYNormal[1], transformedXYNormal[2]]
     };
+
     const intersectionLine = Geom.LineFromIntersectionOfPlanes(clipPlane, transformedXYPlane);
     if (!intersectionLine) {
         return null;
@@ -58,7 +54,21 @@ function clipIntersection(ellipse, perspective) {
         [sidePointXY[0], sidePointXY[1], sidePointXY[2], 1],
     ]).Transpose();
 
-    const  perspectivePoints =  Geom.PerspectiveXYProjection(eye, affinePoints,);
+    const perspectivePoints = Geom.PerspectiveXYProjection(eye, affinePoints,);
+    return perspectivePoints;
+}
+
+function clipIntersection(ellipse, perspective) {
+    const { eye, transform, clip } = perspective;
+
+    if (!clip || !clip.plane) {
+        return null;
+    }
+
+    const perspectivePoints = clipXYLine(perspective);
+    if (!perspectivePoints) {
+        return null;
+    }
 
     const line = { x0: perspectivePoints[0].x, y0: perspectivePoints[0].y, x1: perspectivePoints[1].x, y1: perspectivePoints[1].y };
     const directionalPoint = perspectivePoints[2];
@@ -75,7 +85,7 @@ function clipIntersection(ellipse, perspective) {
     };
 
     // Rotate line points by -theta to align with untransformed ellipse
-    
+
     const cosTheta = Math.cos(-ellipse.theta);
     const sinTheta = Math.sin(-ellipse.theta);
     const rL = {
@@ -113,25 +123,25 @@ function clipIntersection(ellipse, perspective) {
         return {
             x: newX + ellipse.cx,
             y: newY + ellipse.cy,
-            theta: Math.atan2(newY/ellipse.ry, newX/ellipse.rx)
+            theta: Math.atan2(newY / ellipse.ry, newX / ellipse.rx)
         };
     });
 
     const largeArcFlag = side === centerSide ? 1 : 0;
     let sweepFlag;
-    if(largeArcFlag) {
+    if (largeArcFlag) {
         sweepFlag = side === centerSide ? 1 : 0;
     } else {
         sweepFlag = side === centerSide ? 0 : 1;
     }
 
-    return {intersections, side, line, largeArcFlag, sweepFlag, ellipse};
-    
+    return { intersections, side, line, largeArcFlag, sweepFlag, ellipse };
+
 }
 
 
 function clipPolygon(viewBox, perspective) {
-    const { eye, transform, clip } = perspective;
+    const { clip } = perspective;
     const viewBoxVertices = [
         { x: viewBox.x, y: viewBox.y },
         { x: viewBox.x + viewBox.width, y: viewBox.y },
@@ -142,44 +152,12 @@ function clipPolygon(viewBox, perspective) {
     if (!clip || !clip.plane) {
         return null;
     }
-    const clipPlane = clip.plane;
-    const clipPoint = clipPlane.point;
-    const clipNormal = clipPlane.normal;
-    const sidePoint = [clipPoint[0] + clipNormal[0], clipPoint[1] + clipNormal[1], clipPoint[2] + clipNormal[2]];
 
-    // Transform the XY plane
-    const transformedXYPointO = transform.Mult([0, 0, 0, 1]);
-    const transformedXYPointX = transform.Mult([1, 0, 0, 1]);
-    const transformedXYPointY = transform.Mult([0, 1, 0, 1]);
-
-    const dX = [transformedXYPointX[0] - transformedXYPointO[0], transformedXYPointX[1] - transformedXYPointO[1], transformedXYPointX[2] - transformedXYPointO[2]];
-    const dY = [transformedXYPointY[0] - transformedXYPointO[0], transformedXYPointY[1] - transformedXYPointO[1], transformedXYPointY[2] - transformedXYPointO[2]];
-    const cross = [
-        dX[1] * dY[2] - dX[2] * dY[1],
-        dX[2] * dY[0] - dX[0] * dY[2],
-        dX[0] * dY[1] - dX[1] * dY[0]
-    ];
-    const transformedXYNormal = cross;
-
-    // XY plane after transform
-    const transformedXYPlane = {
-        point: [transformedXYPointO[0], transformedXYPointO[1], transformedXYPointO[2]],
-        normal: [transformedXYNormal[0], transformedXYNormal[1], transformedXYNormal[2]]
-    };
-    const intersectionLine = Geom.LineFromIntersectionOfPlanes(clipPlane, transformedXYPlane);
-    if (!intersectionLine) {
+    const perspectivePoints = clipXYLine(perspective);
+    if (!perspectivePoints) {
         return null;
     }
 
-    const sidePointXY = Geom.PerpendicularPointOnPlane(sidePoint, transformedXYPlane);
-
-    const affinePoints = new Matrix([
-        [intersectionLine.point[0], intersectionLine.point[1], intersectionLine.point[2], 1],
-        [intersectionLine.point[0] + intersectionLine.direction[0], intersectionLine.point[1] + intersectionLine.direction[1], intersectionLine.point[2] + intersectionLine.direction[2], 1],
-        [sidePointXY[0], sidePointXY[1], sidePointXY[2], 1],
-    ]).Transpose();
-
-    const  perspectivePoints =  Geom.PerspectiveXYProjection(eye, affinePoints,);
 
     const line = { x0: perspectivePoints[0].x, y0: perspectivePoints[0].y, x1: perspectivePoints[1].x, y1: perspectivePoints[1].y };
     const directionalPoint = perspectivePoints[2];
@@ -193,9 +171,9 @@ function makeClipPath(polygon, inverseTransform) {
     }
     const pathData = polygon.map((point) => {
         const inversePoint = inverseTransform.Mult([point.x, point.y, 1]);
-     const x = inversePoint[0]
-     const y = inversePoint[1];
-       return `${x}px ${y}px`;
+        const x = inversePoint[0]
+        const y = inversePoint[1];
+        return `${x}px ${y}px`;
     }).join(",");
 
     return `polygon(${pathData}) view-box`;
@@ -219,13 +197,14 @@ function elementFromCircleOrEllipse(perspective, renderContext) {
     const opts = JSON.parse(JSON.stringify(this.options));
 
     const geomOpts = extractElements(["cx", "cy", "r", "rx", "ry"], opts);
+
     if ('r' in geomOpts) {
         geomOpts.rx = geomOpts.r;
         geomOpts.ry = geomOpts.r;
         delete geomOpts.r;
     }
 
-    const { ellipse, line, perspectivePoints} = Geom.EllipseWithPerspective(geomOpts.cx, geomOpts.cy, geomOpts.rx, geomOpts.ry, perspective.eye, perspective.transform);
+    const { ellipse, line } = Geom.EllipseWithPerspective(geomOpts.cx, geomOpts.cy, geomOpts.rx, geomOpts.ry, perspective.eye, perspective.transform);
 
     if (line.errorSize < 0.99) {
         const { x0, y0, x1, y1 } = line.segment;
@@ -243,8 +222,30 @@ function elementFromCircleOrEllipse(perspective, renderContext) {
     const rx = ellipse.rx;
     const ry = ellipse.ry;
 
-    const arcSegment = clipIntersection(ellipse, perspective);
-   
+    const inverseTransform = Matrix.Identity(3).Transform(
+        [
+            {
+                op: "Translate",
+                args: { vec: [cx, cy, 1] }
+            },
+            {
+                op: "Rotate",
+                args: { axes: "Z", angle: -ellipse.theta }
+            },
+            {
+                op: "Translate",
+                args: { vec: [-cx, -cy, 1] }
+            },
+        ]);
+
+    const clipP = clipPolygon(renderContext.viewBox, perspective);
+
+    const clipPath = makeClipPath(clipP, inverseTransform);
+
+    if (clipPath) {
+        opts["clip-path"] = clipPath;
+    }
+
     const newOpts = {
         cx,
         cy,
@@ -254,17 +255,6 @@ function elementFromCircleOrEllipse(perspective, renderContext) {
         ...opts
     };
 
-
-    if(arcSegment) {
-        const {intersections, side, line, largeArcFlag, sweepFlag} = arcSegment
-        const angle = ellipse.theta * 180 / Math.PI;
-        const p = intersections;
-        const d = ["M", p[0].x, p[0].y, "A", rx, ry, angle, largeArcFlag, (1-sweepFlag), p[1].x, p[1].y].join(" ");
-    
-        return this.s.path({d,
-            ...opts
-        });
-    }
     return this.s.ellipse(newOpts);
 }
 
