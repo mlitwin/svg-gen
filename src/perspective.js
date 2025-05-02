@@ -259,7 +259,7 @@ function elementFromCircleOrEllipse(perspective, renderContext) {
         const {intersections, side, line, largeArcFlag, sweepFlag} = arcSegment
         const angle = ellipse.theta * 180 / Math.PI;
         const p = intersections;
-        const d = ["M", p[0].x, p[0].y, "A", rx, ry, angle, largeArcFlag, sweepFlag, p[1].x, p[1].y].join(" ");
+        const d = ["M", p[0].x, p[0].y, "A", rx, ry, angle, largeArcFlag, (1-sweepFlag), p[1].x, p[1].y].join(" ");
     
         return this.s.path({d,
             ...opts

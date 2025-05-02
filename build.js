@@ -80,6 +80,8 @@ function makeRange(first, last) {
     return range;
 }
 
+const R = 250;
+
 function makeSphere(context) {
     const svg = context.s.svg({
         width: 600,
@@ -87,18 +89,19 @@ function makeSphere(context) {
         viewBox: "-300 -300 600 600"
     }, [
         ...makeRange(-16, 16).map(i => {
-            return longitude(context, i, 16, 250);
+            return longitude(context, i, 16, R);
         }),
         ...makeRange(-16, 16).map(i => {
-            return latitude(context, i, 16, 250);
+            return latitude(context, i, 16, R);
         }),
     ]);
 
     return svg;
 }
 
+const Z = -2500;
 const context = {
-    eye: { x: 0, y: 0, z: -2500 },
+    eye: { x: 0, y: 0, z: Z - R*R/Z },
     s: new svgGen({}),
     skew: 0
 }
