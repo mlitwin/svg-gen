@@ -1,9 +1,8 @@
 import svgGen, { parseToText } from './src/svg-gen.js';
 import { Matrix } from './src/matrix/matrix.js';
-import Geom from './src/geometry/geometry.js';
 import fs from 'fs';
 
-function longitude(context, i, n, R) {
+function latitude(context, i, n, R) {
     const l = i * (Math.PI / 2) / n;
     const dy = Math.round(Math.sin(l) * R);
     const r = Math.abs(Math.cos(l) * R);
@@ -32,7 +31,7 @@ function longitude(context, i, n, R) {
     return context.s.circle(opts).With({perspective});
 }
 
-function latitude(context, i, n, R) {
+function longitude(context, i, n, R) {
     const l = i * (Math.PI / 2) / n;
 
     const transform = [
