@@ -148,7 +148,7 @@ const Geom = {
         const standard = Geom.EllipseFromPoints(perspectivePoints);
         const ellipse = Geom.EllipseStandardForm(standard);
 
-        return { ellipse, line };
+        return { ellipse, line, perspectivePoints };
     },
     /**
      * Projects a set of 3D affine points onto a 2D plane using a projective transformation.

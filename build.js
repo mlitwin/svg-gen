@@ -98,7 +98,7 @@ function makeSphere(context) {
 }
 
 const context = {
-    eye: { x: 0, y: 0, z: -2000 },
+    eye: { x: 0, y: 0, z: -2500 },
     s: new svgGen({}),
     skew: 0
 }
