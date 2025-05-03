@@ -7,26 +7,7 @@
  */
 
 import { Matrix } from '../matrix/matrix.js';
-
-function quadratic(a, b, c) {
-    const discriminant = b ** 2 - 4 * a * c;
-
-    if (discriminant < 0) {
-        return []; // No real roots
-    }
-
-    const sqrtDiscriminant = Math.sqrt(discriminant);
-
-    if (b >= 0) {
-        const x1 = (-b - sqrtDiscriminant) / (2 * a);
-        const x2 = (2 * c) / (-b - sqrtDiscriminant);
-        return [x1, x2];
-    } else {
-        const x1 = (2 * c) / (-b + sqrtDiscriminant);
-        const x2 = (-b + sqrtDiscriminant) / (2 * a);
-        return [x1, x2];
-    }
-}
+import { Algebra } from '../algebra/algebra.js';
 
 const Geom = {
     /**
@@ -88,7 +69,7 @@ const Geom = {
         const c = A * C - (B / 2) ** 2;
 
 
-        const [l1, l2] = quadratic(1, -b, c);
+        const [l1, l2] = Algebra.QuadraticRoots(1, -b, c);
 
         const x0 = (2 * C * D - B * E) / d0;
         const y0 = (2 * A * E - B * D) / d0;
