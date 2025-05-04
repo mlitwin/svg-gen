@@ -1,18 +1,7 @@
 import { Matrix } from "../matrix/matrix.js";
 import Geom from "../geometry/geometry.js";
 import { PolygonFromViewBoxWithPerspective } from "../geometry/perspective.js";
-
-function extractElements(elements, opts) {
-    const ret = {}
-    elements.forEach((el) => {
-        if (el in opts) {
-            ret[el] = opts[el];
-            delete opts[el];
-        }
-    });
-
-    return ret;
-}
+import { extractElements } from "./svg-util.js";
 
 function makeClipPath(polygon, inverseTransform) {
     if (!polygon) {
