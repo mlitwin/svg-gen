@@ -1,6 +1,6 @@
 // src/svg-gen.js
 
-import { allElementsOptions, svgTypes } from "./svg-types.js";
+import { allElementsOptions, svgTypes } from "./svg/svg-types.js";
 
 function node(type, spec, options, children, s) {
     this.type = type;

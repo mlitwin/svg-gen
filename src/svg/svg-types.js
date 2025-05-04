@@ -1,6 +1,6 @@
 // https://developer.mozilla.org/en-US/docs/Web/SVG/Element
 
-import {elementFromCircleOrEllipse} from "./perspective.js";
+import {elementFromCircleOrEllipse} from "./svg-perspective.js";
 
 const allElementsOptions = [
     { name: "transform" },

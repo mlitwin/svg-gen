@@ -1,6 +1,6 @@
-import { Matrix } from "./matrix/matrix.js";
-import Geom from "./geometry/geometry.js";
-import { PolygonFromViewBoxWithPerspective } from "./geometry/perspective.js";
+import { Matrix } from "../matrix/matrix.js";
+import Geom from "../geometry/geometry.js";
+import { PolygonFromViewBoxWithPerspective } from "../geometry/perspective.js";
 
 function extractElements(elements, opts) {
     const ret = {}
