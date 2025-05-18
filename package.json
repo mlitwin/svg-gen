@@ -1,7 +1,7 @@
 {
     "name": "svg-gen",
     "type": "module",
-    "version": "1.0.0",
+    "version": "0.0.0",
     "description": "A tool for generating SVG files",
     "main": "index.js",
     "scripts": {
