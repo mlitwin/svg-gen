@@ -74,7 +74,10 @@ const svgTypes = {
         options: [
             { name: "cx" },
             { name: "cy" },
-            { name: "r" }
+            { name: "r" },
+            { name: "marker-start" },
+            { name: "marker-mid" },
+            { name: "marker-end" }
         ]
     },
     clipPath: {
@@ -97,6 +100,9 @@ const svgTypes = {
             { name: "cy" },
             { name: "rx" },
             { name: "ry" },
+            { name: "marker-start" },
+            { name: "marker-mid" },
+            { name: "marker-end" }
         ]
     },
     feBlend: {
@@ -266,7 +272,10 @@ const svgTypes = {
             { name: "x1" },
             { name: "y1" },
             { name: "x2" },
-            { name: "y2" }
+            { name: "y2" },
+            { name: "marker-start" },
+            { name: "marker-mid" },
+            { name: "marker-end" }
         ]
     },
     linearGradient: {
@@ -305,12 +314,15 @@ const svgTypes = {
     },
     mpath: {
         options: [
-            { name: "href" }
+            { name: "href" },
         ]
     },
     path: {
         options: [
-            { name: "d" }
+            { name: "d" },
+            { name: "marker-start" },
+            { name: "marker-mid" },
+            { name: "marker-end" }
         ]
     },
     pattern: {
@@ -324,12 +336,18 @@ const svgTypes = {
     },
     polygon: {
         options: [
-            { name: "points" }
+            { name: "points" },
+            { name: "marker-start" },
+            { name: "marker-mid" },
+            { name: "marker-end" }
         ]
     },
     polyline: {
         options: [
-            { name: "points" }
+            { name: "points" },
+            { name: "marker-start" },
+            { name: "marker-mid" },
+            { name: "marker-end" }
         ]
     },
     radialGradient: {
@@ -349,7 +367,10 @@ const svgTypes = {
             { name: "width" },
             { name: "height" },
             { name: "rx" },
-            { name: "ry" }
+            { name: "ry" },
+            { name: "marker-start" },
+            { name: "marker-mid" },
+            { name: "marker-end" }
         ]
     },
     script: {
