@@ -1,6 +1,6 @@
 // https://developer.mozilla.org/en-US/docs/Web/SVG/Element
 
-import {elementFromCircleOrEllipse} from "./svg-perspective.js";
+import { elementFromCircleOrEllipse } from "./svg-perspective.js";
 
 const allElementsOptions = [
     { name: "transform" },
@@ -418,7 +418,8 @@ const svgTypes = {
             { name: "dy" },
             { name: "rotate" },
             { name: "textLength" },
-            { name: "lengthAdjust" }
+            { name: "lengthAdjust" },
+            { name: "font-size" }
         ]
     },
     textPath: {
@@ -426,7 +427,9 @@ const svgTypes = {
             { name: "href" },
             { name: "startOffset" },
             { name: "method" },
-            { name: "spacing" }
+            { name: "spacing" },
+            { name: "font-size" }
+
         ]
     },
     title: { options: [] },
@@ -439,7 +442,9 @@ const svgTypes = {
             { name: "dy" },
             { name: "rotate" },
             { name: "textLength" },
-            { name: "lengthAdjust" }
+            { name: "lengthAdjust" },
+            { name: "font-size" }
+
         ]
     },
     use: { options: [] },
@@ -451,12 +456,12 @@ const svgTypes = {
     }
 };
 
-svgTypes.circle.withPerspective = function(perspective, renderContext) {
+svgTypes.circle.withPerspective = function (perspective, renderContext) {
     return elementFromCircleOrEllipse.call(this, perspective, renderContext);
 }
 
-svgTypes.ellipse.withPerspective = function(perspective, renderContext) {
+svgTypes.ellipse.withPerspective = function (perspective, renderContext) {
     return elementFromCircleOrEllipse.call(this, perspective, renderContext);
 }
 
-export {allElementsOptions, svgTypes};
+export { allElementsOptions, svgTypes };
