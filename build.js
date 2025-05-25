@@ -134,9 +134,9 @@ function makeCoordSys(opts) {
             ])
         ]),
         s.line({ ...l1coords, stroke: "black", 'stroke-width': 2, 'marker-end': "url(#arrowhead)" }),
-        s.text({ x: (l1coords.x1 + l1coords.x2) / 2 - 35, y: (l1coords.y1 + l1coords.y2) / 2, "font-size": "2em" }, "x₁"),
+        s.text({ x: (l1coords.x1 + l1coords.x2) / 2 - 35, y: (l1coords.y1 + l1coords.y2) / 2, "font-size": "2em" }, "e¹"),
         s.line({ ...l2coords, stroke: "black", 'stroke-width': 2, 'marker-end': "url(#arrowhead)" }),
-        s.text({ x: (l2coords.x1 + l2coords.x2) / 2, y: (l2coords.y1 + l2coords.y2) / 2 + 35, "font-size": "2em" }, "x₂"),
+        s.text({ x: (l2coords.x1 + l2coords.x2) / 2, y: (l2coords.y1 + l2coords.y2) / 2 + 35, "font-size": "2em" }, "e²"),
 
     ]);
 

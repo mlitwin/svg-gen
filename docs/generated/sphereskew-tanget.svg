@@ -8,13 +8,13 @@
   <line x1="50" y1="250" x2="50" y2="50" marker-end="url(#arrowhead)" stroke="black" stroke-width="2"/>
   
   <text x="15" y="150" font-size="2em">
-    x₁
+    e¹
     
   </text>
   <line x1="50" y1="250" x2="200" y2="200" marker-end="url(#arrowhead)" stroke="black" stroke-width="2"/>
   
   <text x="125" y="260" font-size="2em">
-    x₂
+    e²
     
   </text>
 </svg>
