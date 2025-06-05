@@ -49,16 +49,35 @@ function ClipXYHalfPlane(perspective) {
         return null;
     }
 
-    const sidePointXY = Geom.PerpendicularPointOnPlane(sidePoint, transformedXYPlane);
+    const eyePoint = [eye.x, eye.y, eye.z];
 
     const affinePoints = new Matrix([
         [intersectionLine.point[0], intersectionLine.point[1], intersectionLine.point[2], 1],
         [intersectionLine.point[0] + intersectionLine.direction[0], intersectionLine.point[1] + intersectionLine.direction[1], intersectionLine.point[2] + intersectionLine.direction[2], 1],
-        [sidePointXY[0], sidePointXY[1], sidePointXY[2], 1],
     ]).Transpose();
 
-    const perspectivePoints = Geom.PerspectiveXYProjection(eye, affinePoints,);
-    return perspectivePoints;
+    const perspectivePoints = Geom.PerspectiveXYProjection(eye, affinePoints);
+    const p0 = perspectivePoints[0];
+    const p1 = perspectivePoints[1];
+
+    // Test point in XY plane - which side is it on?
+    const pSide = {
+        x: p0.x - (p1.y - p0.y),
+        y: p0.y + (p1.x - p0.x)
+    };
+    const pS0 =  Geom.PointFromIntersectionOfLineAndPlane(eyePoint, [pSide.x, pSide.y, 0], clipPlane);
+    const pS1 =  Geom.PointFromIntersectionOfLineAndPlane(eyePoint, [pSide.x, pSide.y, 0], transformedXYPlane);
+    const d0 = Geom.Distance2BetweenPoints(eyePoint, pS0);
+    const d1 = Geom.Distance2BetweenPoints(eyePoint, pS1);
+
+    let side = Geom.SideOfPointFromLine(perspectivePoints[0], perspectivePoints[1], pSide);
+
+    // Is the clip plane between the eye and the 3D plane? Wrong side, then.
+    if(d0 < d1) {
+        side *= -1;
+    }
+
+    return {points: perspectivePoints, side};
 }
 
 /**
@@ -190,19 +209,35 @@ function PolygonFromViewBoxWithPerspective(viewBox, perspective) {
     }
 
     const perspectivePoints = ClipXYHalfPlane(perspective);
+   // console.log(perspectivePoints)
     if (!perspectivePoints) {
         return null;
     }
 
 
-    const line = { x0: perspectivePoints[0].x, y0: perspectivePoints[0].y, x1: perspectivePoints[1].x, y1: perspectivePoints[1].y };
-    const directionalPoint = perspectivePoints[2];
+   // const line = { x0: perspectivePoints.points[0].x, y0: perspectivePoints.points[0].y, x1: perspectivePoints.[1].x, y1: perspectivePoints[1].y };
+   // const directionalPoint = perspectivePoints[2];
 
-    return Geom.PolygonFromLineIntersectionPolygon(line, directionalPoint, viewBoxVertices);
+    return Geom.PolygonFromLineIntersectionPolygon(perspectivePoints.points[0], perspectivePoints.points[1], perspectivePoints.side, viewBoxVertices);
 }
+
+function PointWithPerspective(x, y, eye, transform) {
+
+    if (transform.m !== 4 || transform.n !== 4) {
+        throw new Error("Transform matrix must be 4x4.");
+    }
+
+    const point = new Matrix([[x, y, 0, 1]]).Transpose();
+    const transformed = transform.Mult(point);
+
+    const perspectivePoints = Geom.PerspectiveXYProjection(eye, transformed);
+
+    return perspectivePoints[0];
+};
 
 export {
     ClipXYHalfPlane,
     ArcFromEllipseWithClip,
-    PolygonFromViewBoxWithPerspective
+    PolygonFromViewBoxWithPerspective,
+    PointWithPerspective
 };

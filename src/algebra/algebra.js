@@ -1,3 +1,9 @@
+
+/**
+ * @file algebra.js
+ * @description Provides algebraic utility functions, including numerically stable quadratic root calculation.
+ */
+
 const Algebra = {
     /**
      * Calculates the real roots of a quadratic equation ax² + bx + c = 0
@@ -5,13 +11,18 @@ const Algebra = {
      * @param {number} a - The coefficient of x²
      * @param {number} b - The coefficient of x
      * @param {number} c - The constant term
+     * @param {bool} assumeRealRoots - if true, will assume there are real roots, and do its best to find them.
      * @returns {number[]} Array containing the real roots (empty if no real roots exist, 2 roots if they are equal)
      */
-    QuadraticRoots(a, b, c) {
-        const discriminant = b ** 2 - 4 * a * c;
+    QuadraticRoots(a, b, c, assumeRealRoots = false) {
+        let discriminant = b ** 2 - 4 * a * c;
 
         if (discriminant < 0) {
-            return [];
+            if (assumeRealRoots) {
+                discriminant = 0;
+            } else {
+                return []; // No real roots
+            }
         }
 
         const sqrtDiscriminant = Math.sqrt(discriminant);
@@ -31,5 +42,5 @@ const Algebra = {
     }
 }
 
-export {Algebra};
+export { Algebra };
 

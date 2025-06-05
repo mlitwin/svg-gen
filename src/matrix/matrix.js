@@ -198,7 +198,7 @@ Matrix.prototype.Translate = function (opts) {
     const n = this.n;
     const transform = Matrix.Identity(m);
     for (let i = 0; i < vec.length; i++) {
-        transform[i][n - 1] = vec[i];
+        transform[i][m - 1] = vec[i];
     }
     return transform.Mult(this);
 }
@@ -212,16 +212,18 @@ const axesMap = {
 /**
  * Rotates the matrix around a specified axis by a given angle.
  * 
- * @param {string|number|array} axes - The axis of rotation. Can be a string ('x', 'y', 'z'), 
+ * @param {Object} opts - The rotation options
+ * @param {string|number|array} opts.axes - The axis of rotation. Can be a string ('x', 'y', 'z'), 
  *                                     a number (0, 1, 2 corresponding to x, y, z respectively),
  *                                     or an array of two numbers representing the two axes 
  *                                     that define the plane of rotation.
- * @param {number} angle - The angle of rotation in radians.
+ * @param {number} opts.angle - The angle of rotation in radians.
  * @returns {Matrix} A new matrix resulting from the rotation transformation.
  */
 Matrix.prototype.Rotate = function (opts) {
     let axes = opts.axes;
     const angle = opts.angle;
+    const center = opts.center || Array(this.n).fill(0);
 
     if (typeof axes === 'string') {
         axes = axesMap[axes.toLowerCase()];
@@ -229,17 +231,30 @@ Matrix.prototype.Rotate = function (opts) {
     if (typeof axes === 'number') {
         axes = [0, 1, 2].filter(i => i !== axes);
     }
-    const transform = this.Identity();
+
+    const toOrigin = this.Identity();
+    for (let i = 0; i < this.n - 1; i++) {
+        toOrigin[i][toOrigin.m - 1] = -center[i];
+    }
+
+    const rotation = this.Identity();
     const c = Math.cos(angle);
     const s = Math.sin(angle);
 
+    // Apply rotation
+    rotation[axes[0]][axes[0]] = c;
+    rotation[axes[0]][axes[1]] = -s;
+    rotation[axes[1]][axes[0]] = s;
+    rotation[axes[1]][axes[1]] = c;
 
-    transform[axes[0]][axes[0]] = c;
-    transform[axes[0]][axes[1]] = -s;
-    transform[axes[1]][axes[0]] = s;
-    transform[axes[1]][axes[1]] = c;
+    const fromOrigin = this.Identity();
+    for (let i = 0; i < this.n - 1; i++) {
+        fromOrigin[i][fromOrigin.m - 1] = center[i];
+    }
 
-    return transform.Mult(this);
+    const rotationAboutCenter = fromOrigin.Mult(rotation).Mult(toOrigin);
+
+    return rotationAboutCenter.Mult(this);
 }
 
 /*
@@ -339,6 +354,35 @@ Matrix.prototype.Transform = function (transformation) {
         }
     });
     return result;
+}
+
+Matrix.prototype.Graphics = function() {
+    if( this.m !== this.n) {
+        throw new Error(`No graphics transformation possible when m (${this.m}) != n (${this.n})`);
+    }
+    if(this.n <=1) {
+        return this;
+    }
+
+    const T = this.Identity();
+    T[1][1] = -1;
+
+    return T.Mult(this).Mult(T);
+}
+
+
+Matrix.prototype.Graphics1 = function() {
+    if( this.m !== this.n) {
+        throw new Error(`No graphics transformation possible when m (${this.m}) != n (${this.n})`);
+    }
+    if(this.n <=1) {
+        return this;
+    }
+
+    const T = this.Identity();
+    T[1][1] = -1;
+
+    return this.Mult(T);
 }
 
 Matrix.prototype.det = function () {

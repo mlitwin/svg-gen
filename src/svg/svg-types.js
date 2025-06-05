@@ -1,6 +1,5 @@
 // https://developer.mozilla.org/en-US/docs/Web/SVG/Element
-
-import { elementFromCircleOrEllipse } from "./svg-perspective.js";
+import { svgPathDStringFromArray, svgPathDArrayFromString } from "./svg-path.js";
 
 const allElementsOptions = [
     { name: "transform" },
@@ -319,7 +318,15 @@ const svgTypes = {
     },
     path: {
         options: [
-            { name: "d" },
+            {
+                name: "d",
+                toSVGString: function (value) {
+                    return svgPathDStringFromArray(value);
+                },
+                fromSVGString: function (value) {
+                    return svgPathDArrayFromString(value);
+                }
+            },
             { name: "marker-start" },
             { name: "marker-mid" },
             { name: "marker-end" }
@@ -404,7 +411,16 @@ const svgTypes = {
         options: [
             { name: "width", default: "100" },
             { name: "height", default: "100" },
-            { name: "viewBox", default: "0 0 100 100" },
+            {
+                name: "viewBox", default: "0 0 100 100",
+                toSVGString: function (value) {   
+                    return `${value.x} ${value.y} ${value.width} ${value.height}`;
+                },
+                fromSVGString: function (value) {
+                    const [x, y, width, height] = value.split(' ').map(Number);
+                    return { x, y, width, height };
+                }
+            },
             { name: "xmlns", default: "http://www.w3.org/2000/svg" }
         ]
     },
@@ -456,12 +472,10 @@ const svgTypes = {
     }
 };
 
-svgTypes.circle.withPerspective = function (perspective, renderContext) {
-    return elementFromCircleOrEllipse.call(this, perspective, renderContext);
+for (const type in svgTypes) {
+    svgTypes[type].options = [...allElementsOptions, ...(svgTypes[type].options || [])];
+    svgTypes[type].optionsMap = Object.fromEntries(svgTypes[type].options.map(opt => [opt.name, opt]));
+
 }
 
-svgTypes.ellipse.withPerspective = function (perspective, renderContext) {
-    return elementFromCircleOrEllipse.call(this, perspective, renderContext);
-}
-
-export { allElementsOptions, svgTypes };
+export { svgTypes };

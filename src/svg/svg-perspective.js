@@ -1,20 +1,51 @@
 import { Matrix } from "../matrix/matrix.js";
-import Geom from "../geometry/geometry.js";
-import { PolygonFromViewBoxWithPerspective } from "../geometry/perspective.js";
+import Ellipse from "../geometry/ellipse.js";
+import { PolygonFromViewBoxWithPerspective, PointWithPerspective } from "../geometry/perspective.js";
 import { extractElements } from "./svg-util.js";
+import { walkSVGPathDArray } from "./svg-path.js";
 
-function makeClipPath(polygon, inverseTransform) {
+// transform is an array of 2-d affine transforms
+function transformToSVGTransform(transform) {
+    return transform.reduce((result, t) => {
+        const prefix = result ? `${results} ` : '';
+        switch (t.op) {
+            case "Rotate":
+                return prefix + `rotate(${t.args.angle * 180 / Math.PI} ${t.args.center[0]} ${t.args.center[1]}) `;
+            case "Translate":
+                return prefix + `translate(${t.args.vec[0]} ${t.args.vec[1]}) `;
+            default:
+                throw new Error(`Unknown transformation operation: ${t.op}`);
+        }
+    }, "");
+}
+
+function makeClipPath(polygon, transform) {
+
     if (!polygon) {
         return null;
     }
+    const svd = transform.SVD();
+
     const pathData = polygon.map((point) => {
-        const inversePoint = inverseTransform.Mult([point.x, point.y, 1]);
+        const inversePoint = Matrix.SVDSolve(svd, [point.x, point.y, 1]);
         const x = inversePoint[0]
         const y = inversePoint[1];
         return `${x}px ${y}px`;
     }).join(",");
 
     return `polygon(${pathData}) view-box`;
+}
+
+function setClipPath(opts, perspective, renderContext, transform = Matrix.Identity(3)) {
+    const clipP = PolygonFromViewBoxWithPerspective(renderContext.viewBox, perspective);
+
+    const clipPath = makeClipPath(clipP, transform);
+    // console.log(clipP, clipPath);
+
+    if (clipPath) {
+        opts["clip-path"] = clipPath;
+        opts._clipP = clipP;
+    }
 }
 
 /**
@@ -42,7 +73,7 @@ function elementFromCircleOrEllipse(perspective, renderContext) {
         delete geomOpts.r;
     }
 
-    const { ellipse, line } = Geom.EllipseWithPerspective(geomOpts.cx, geomOpts.cy, geomOpts.rx, geomOpts.ry, perspective.eye, perspective.transform);
+    const { ellipse, line } = Ellipse.EllipseWithPerspective(geomOpts.cx, geomOpts.cy, geomOpts.rx, geomOpts.ry, perspective.eye, perspective.transform);
 
     if (line.errorSize < 0.99) {
         const { x0, y0, x1, y1 } = line.segment;
@@ -60,40 +91,189 @@ function elementFromCircleOrEllipse(perspective, renderContext) {
     const rx = ellipse.rx;
     const ry = ellipse.ry;
 
-    const inverseTransform = Matrix.Identity(3).Transform(
+    const transform =
         [
             {
-                op: "Translate",
-                args: { vec: [cx, cy, 1] }
-            },
-            {
                 op: "Rotate",
-                args: { axes: "Z", angle: -ellipse.theta }
-            },
-            {
-                op: "Translate",
-                args: { vec: [-cx, -cy, 1] }
-            },
-        ]);
+                args: { axes: "Z", angle: ellipse.theta, center: [cx, cy] }
+            }
+        ];
 
-    const clipP = PolygonFromViewBoxWithPerspective(renderContext.viewBox, perspective);
+    setClipPath(opts, perspective, renderContext, Matrix.Identity(3).Transform(transform));
 
-    const clipPath = makeClipPath(clipP, inverseTransform);
-
-    if (clipPath) {
-        opts["clip-path"] = clipPath;
-    }
+    const transformPath = transformToSVGTransform(transform);
 
     const newOpts = {
         cx,
         cy,
         rx,
         ry,
-        transform: `rotate(${ellipse.theta * 180 / Math.PI} ${cx} ${cy})`,
+        transform: transformPath,
         ...opts
     };
 
     return this.s.ellipse(newOpts);
 }
 
-export { elementFromCircleOrEllipse }
+
+function pathCommandFromArc(cur, av, perspective, _this) {
+
+    const [rx, ry, xAxisRotation, largeArcFlag, sweepFlag, x, y] = av;
+    const el = Ellipse.arcEndpointToCenterParameters(cur.x, cur.y, rx, ry, xAxisRotation, largeArcFlag, sweepFlag, x, y);
+   
+    const { ellipse, line } = Ellipse.EllipseWithPerspective(el.cx, el.cy, el.rx, el.ry, perspective.eye, perspective.transform);
+
+    { // Debugging instrumentation
+        _this._ellipse = ellipse;
+
+        const transform =
+            [
+                {
+                    op: "Rotate",
+                    args: { axes: "Z", angle: ellipse.theta, center: [ellipse.cx, ellipse.cy] }
+                }
+            ];
+
+            
+        const transformPath = transformToSVGTransform(transform);
+        _this._ellipse.transformPath = transformPath;
+    }
+    const pt1 = PointWithPerspective(x, y, perspective.eye, perspective.transform);
+
+    if (line.errorSize < 0.99) {
+
+        return {
+            op: 'L',
+            args: [pt1.x, pt1.y]
+        };
+
+    }
+
+    const pt0 = PointWithPerspective(cur.x, cur.y, perspective.eye, perspective.transform);
+
+    const w0 = {
+        x: (pt0.x - el.cx) / el.rx,
+        y: (pt0.y - el.cy) / el.ry,
+    }
+    const w1 = {
+        x: (pt1.x - el.cx) / el.rx,
+        y: (pt1.y - el.cy) / el.ry,
+    }
+
+    // Sweep is in -y SVG coords?
+    const theta0 = Math.atan2(w0.y, w0.x);
+    const theta1 = Math.atan2(w1.y, w1.x); // Can't explain the - here. TODO
+    const deltaTheta = (theta1 - theta0);
+
+    const newArc = Ellipse.arcCenterToEndpointParameters(ellipse.cx, ellipse.cy, ellipse.rx, ellipse.ry, ellipse.theta, theta0, deltaTheta);
+
+    av[0] = ellipse.rx;
+    av[1] = ellipse.ry;
+    av[2] = -ellipse.theta * (180 / Math.PI);
+    av[3] = newArc.fa;
+    av[4] = newArc.fs;
+    av[5] = pt1.x;
+    av[6] = pt1.y;
+
+    return {
+        op: 'A',
+        args: av
+    }
+}
+
+function elementFromPath(perspective, renderContext) {
+    const opts = JSON.parse(JSON.stringify(this.options));
+    const d = opts.d;
+
+    const pD = [];
+    walkSVGPathDArray(d, (op, args, absoluteArgs, cur) => {
+        let command = { op: op.toUpperCase(), args: absoluteArgs };
+        const av = command.args;
+        switch (command.op) {
+            case 'M':
+            case 'L':
+            case 'T': {
+                const pt = PointWithPerspective(av[0], av[1], perspective.eye, perspective.transform);
+                av[0] = pt.x;
+                av[1] = pt.y;
+                break;
+            }
+            case 'H': {
+                const pt = PointWithPerspective(av[0], cur.y, perspective.eye, perspective.transform);
+                av[0] = pt.x;
+                break;
+            }
+            case 'V': {
+                const pt = PointWithPerspective(cur.x, av[0], perspective.eye, perspective.transform);
+                av[0] = pt.y;
+                break;
+            }
+            case 'C': {
+                const pt1 = PointWithPerspective(av[0], av[1], perspective.eye, perspective.transform);
+                const pt2 = PointWithPerspective(av[2], av[3], perspective.eye, perspective.transform);
+                const pt3 = PointWithPerspective(av[4], av[5], perspective.eye, perspective.transform);
+                av[0] = pt1.x;
+                av[1] = pt1.y;
+                av[2] = pt2.x;
+                av[3] = pt2.y;
+                av[4] = pt3.x;
+                av[5] = pt3.y;
+                break;
+            }
+            case 'S': {
+                const pt1 = PointWithPerspective(av[0], av[1], perspective.eye, perspective.transform);
+                const pt2 = PointWithPerspective(av[2], av[3], perspective.eye, perspective.transform);
+                av[0] = pt1.x;
+                av[1] = pt1.y;
+                av[2] = pt2.x;
+                av[3] = pt2.y;
+                break;
+            }
+            case 'Q': {
+                const pt1 = PointWithPerspective(av[0], av[1], perspective.eye, perspective.transform);
+                const pt2 = PointWithPerspective(av[2], av[3], perspective.eye, perspective.transform);
+                av[0] = pt1.x;
+                av[1] = pt1.y;
+                av[2] = pt2.x;
+                av[3] = pt2.y;
+                break;
+            }
+            case 'A': {
+                command = pathCommandFromArc(cur, av, perspective, this);
+                break;
+            }
+            default:
+                break;
+        };
+        pD.push(command);
+    });
+
+    opts.d = pD;
+
+    if (this._ellipsex) {
+        const e = this._ellipse;
+        const newOpts = {
+            cx: e.cx,
+            cy: e.cy,
+            rx: e.rx,
+            ry: e.ry,
+            transform: e.transformPath,
+            ...opts
+        };
+
+        return this.s.ellipse(newOpts);
+    }
+
+    setClipPath(opts, perspective, renderContext);
+
+    return this.s.path(opts);
+}
+
+
+function addWithPerspective(svgTypes) {
+    svgTypes.ellipse.withPerspective = elementFromCircleOrEllipse;
+    svgTypes.circle.withPerspective = elementFromCircleOrEllipse;
+    svgTypes.path.withPerspective = elementFromPath;
+}
+
+export { addWithPerspective }

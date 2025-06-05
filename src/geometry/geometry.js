@@ -8,83 +8,10 @@
 
 import { Matrix } from '../matrix/matrix.js';
 import { Algebra } from '../algebra/algebra.js';
+import Ellipse from './ellipse.js';
 
 const Geom = {
-    /**
-     * Computes the coefficients of a general ellipse in the x-y plane
-     * from an array of points.
-     * 
-     * @param {Array<{x: number, y: number}>} points - An array of points with x and y coordinates.
-     * @returns {Object<A: number, B: number, C: number, D: number, E: number>} The coefficients of the general ellipse equation Ax^2  + By^2 + Cxy + Dx + Ey = 1.
-     */
-    EllipseFromPoints(points) {
-        const matrixRows = points.map(({ x, y }) => [x ** 2, x * y, y ** 2, x, y]);
-        const matrix = new Matrix(matrixRows);
-        const svd = matrix.SVD();
-        const solution = Matrix.SVDSolve(svd, Array(matrixRows.length).fill(1));
 
-        return { A: solution[0], B: solution[1], C: solution[2], D: solution[3], E: solution[4] };
-    },
-    /**
-     * Converts the coefficients of a general conic equation into the standard form of an ellipse.
-     * 
-     * The general conic equation is represented as:
-     * Ax^2 + Bxy + Cy^2 + Dx + Ey + F = 0
-     * 
-     * This function calculates the center (h, k), semi-major axis, semi-minor axis, and other parameters
-     * of the ellipse in standard form.
-     * 
-     * @param {Object} coefficients - The coefficients of the general conic equation.
-     * @param {number} coefficients.A - The coefficient of x^2.
-     * @param {number} coefficients.B - The coefficient of xy.
-     * @param {number} coefficients.C - The coefficient of y^2.
-     * @param {number} coefficients.D - The coefficient of x.
-     * @param {number} coefficients.E - The coefficient of y.
-     * @returns {Object} An object containing the parameters of the ellipse in standard form.
-     * @returns {number} return.cx - The x-coordinate of the center of the ellipse.
-     * @returns {number} return.cy - The y-coordinate of the center of the ellipse.
-     * @returns {number} return.rx - The semi-major axis of the ellipse.
-     * @returns {number} return.ry - The semi-minor axis of the ellipse.
-     * @returns {number} return.theta - The rotation angle of the ellipse.
-     */
-    EllipseStandardForm(coefficients) {
-        // https://en.wikipedia.org/wiki/Conic_section#Conversion_to_canonical_form
-        const { A, B, C, D, E } = coefficients;
-        const F = -1; // The general conic equation is assumed to be normalized such that F = -1.
-
-        const AQ = new Matrix([
-            [A, B / 2, D / 2],
-            [B / 2, C, E / 2],
-            [D / 2, E / 2, F]
-        ]);
-
-        const A33 = new Matrix([
-            [A, B / 2],
-            [B / 2, C]
-        ]);
-
-        const d0 = B ** 2 - 4 * A * C;
-
-        const b = (A + C);
-        const c = A * C - (B / 2) ** 2;
-
-
-        const [l1, l2] = Algebra.QuadraticRoots(1, -b, c);
-
-        const x0 = (2 * C * D - B * E) / d0;
-        const y0 = (2 * A * E - B * D) / d0;
-
-        const theta = 0.5 * Math.atan2(-B, C - A);
-
-
-        const K = - (AQ.det() / A33.det());
-
-
-        const rx = Math.sqrt(K / l1);
-        const ry = Math.sqrt(K / l2);
-
-        return { cx: x0, cy: y0, rx, ry, theta };
-    },
     PointsWithPerspective(points, eye, transform) {
 
         if (transform.m !== 4 || transform.n !== 4) {
@@ -94,42 +21,6 @@ const Geom = {
         const transformed = transform.Mult(points);
         const perspectivePoints = Geom.PerspectiveXYProjection(eye, transformed);
         return perspectivePoints;
-    },
-    /**
-     * Generates an ellipse in the xy plane via perspective projection from the given
-     *  ellipse defined by an affine transform of an ellipse defined in the xy plane.
-     *
-     * @param {number} cx - The x-coordinate of the center of the ellipse.
-     * @param {number} cy - The y-coordinate of the center of the ellipse.
-     * @param {number} rx - The radius of the ellipse along the x-axis.
-     * @param {number} ry - The radius of the ellipse along the y-axis.
-     * @param {Array<number>} eye - The coordinates of the eye point for perspective projection [x, y, z].
-     * @param {Matrix} transform - A transformation matrix to apply to the ellipse points.
-     * @returns {Object} An object representing the ellipse in standard form after perspective transformation.
-     */
-    EllipseWithPerspective(cx, cy, rx, ry, eye, transform) {
-
-        if (transform.m !== 4 || transform.n !== 4) {
-            throw new Error("Transform matrix must be 4x4.");
-        }
-
-        const points = new Matrix(Array.from({ length: 8 }, (_, i) => {
-            const angle = (i * 2 * Math.PI) / 8;
-            return [cx + rx * Math.cos(angle), cy + ry * Math.sin(angle), 0, 1];
-
-        })).Transpose();
-
-
-        const transformed = transform.Mult(points);
-
-        const perspectivePoints = Geom.PerspectiveXYProjection(eye, transformed);
-        const line = Geom.SegmentFromPoints(perspectivePoints);
-
-
-        const standard = Geom.EllipseFromPoints(perspectivePoints);
-        const ellipse = Geom.EllipseStandardForm(standard);
-
-        return { ellipse, line, perspectivePoints };
     },
     /**
      * Projects a set of 3D affine points onto a 2D plane using a projective transformation.
@@ -251,22 +142,21 @@ const Geom = {
     /**
      * Calculates the intersection point of two lines in a plane.
      *
-     * @param {{x0: number, y0: number, x1: number, y1: number}} l0 - The first line represented by two points (x0, y0) and (x1, y1).
-     * @param {{x0: number, y0: number, x1: number, y1: number}} l1 - The second line represented by two points (x0, y0) and (x1, y1).
+     * @param {{p0: {x: number, y: number}, p1: {x: number, y: number}}} l0 - The first line represented by two points p0 and p1.
+     * @param {{p0: {x: number, y: number}, p1: {x: number, y: number}}} l1 - The second line represented by two points p0 and p1.
      * @returns {{x: number, y: number, l: number}} The intersection point of the two lines, where `x` and `y` are the coordinates of the intersection,
      * and `l` is the parameter of the intersection along the second line (l1).
      */
     PointFromIntersectionOfLinesInPlane(l0, l1) {
-        const { x0: x0_0, y0: y0_0, x1: x1_0, y1: y1_0 } = l0;
-        const { x0: x0_1, y0: y0_1, x1: x1_1, y1: y1_1 } = l1;
+        // l0: {p0: {x, y}, p1: {x, y}}
+        // l1: {p0: {x, y}, p1: {x, y}}
+        const a1 = l0.p1.y - l0.p0.y;
+        const b1 = l0.p0.x - l0.p1.x;
+        const c1 = a1 * l0.p0.x + b1 * l0.p0.y;
 
-        const a1 = y1_0 - y0_0;
-        const b1 = x0_0 - x1_0;
-        const c1 = a1 * x0_0 + b1 * y0_0;
-
-        const a2 = y1_1 - y0_1;
-        const b2 = x0_1 - x1_1;
-        const c2 = a2 * x0_1 + b2 * y0_1;
+        const a2 = l1.p1.y - l1.p0.y;
+        const b2 = l1.p0.x - l1.p1.x;
+        const c2 = a2 * l1.p0.x + b2 * l1.p0.y;
 
         const determinant = a1 * b2 - a2 * b1;
 
@@ -277,34 +167,46 @@ const Geom = {
         const x = (b2 * c1 - b1 * c2) / determinant;
         const y = (a1 * c2 - a2 * c1) / determinant;
 
-        const l = ((x - x0_1) * (x1_1 - x0_1) + (y - y0_1) * (y1_1 - y0_1)) /
-                  ((x1_1 - x0_1) ** 2 + (y1_1 - y0_1) ** 2);
+        const l = ((x - l1.p0.x) * (l1.p1.x - l1.p0.x) + (y - l1.p0.y) * (l1.p1.y - l1.p0.y)) /
+            ((l1.p1.x - l1.p0.x) ** 2 + (l1.p1.y - l1.p0.y) ** 2);
 
-        return { x, y, l };
+        return { point: { x, y }, l };
     },
     /**
      * Generates a polygon from the intersection of a line with another polygon.
      * 
-     * @param {{x0: number, y0: number, x1: number, y1: number}} line - The line defined by two points (x0, y0) and (x1, y1).
-     * @param {{x: number, y: number}} sidePoint - A point used to determine which side of the line to include.
-     * @param {{x: number, y: number}[]} poly - An array of points defining the vertices of the polygon.
-     * @returns {{x: number, y: number}[]} A new polygon consisting of the points from the input polygon that are on the same side of the line as `sidePoint`, 
-     * along with the intersection points of the line with the polygon's edges.
+     * @param {{x: number, y: number}} p0 - Base point of line
+     * @param {{x: number, y: number}} p1 - Second point of line
+     * @param {{x: number, y: number}} point - Point used to determine side
+     * @returns {number} -1, 0, 1 depending on side calculation
      */
-    PolygonFromLineIntersectionPolygon(line, sidePoint, poly) {
-        const { x0, y0, x1, y1 } = line;
-
-        // Helper function to determine which side of the line a point is on
-        const side = (x, y) => (x1 - x0) * (y - y0) - (y1 - y0) * (x - x0);
-
-        const sideOfSidePoint = side(sidePoint.x, sidePoint.y);
+    SideOfPointFromLine(p0, p1, point) {
+        const value = (p1.x - p0.x) * (point.y - p0.y) - (p1.y - p0.y) * (point.x - p0.x);
+        if (value < 0) return -1;
+        if (value > 0) return 1;
+        return 0;
+    },
+    /**
+     * Computes a new polygon by intersecting a line with an existing polygon.
+     * The resulting polygon includes points from the original polygon that lie on
+     * the specified side of the line, plus any intersection points.
+     * 
+     * @param {Object} p0 - Start point of the line {x, y}
+     * @param {Object} p1 - End point of the line {x, y}
+     * @param {number} sideOfSidePoint - Determines which side of the line to keep (-1 or 1)
+     * @param {Array<Object>} poly - Array of points {x, y} representing the polygon vertices
+     * @returns {Array<Object>} A new array of points {x, y} representing the resulting polygon,
+     *                         sorted in counter-clockwise order
+     */
+    PolygonFromLineIntersectionPolygon(p0, p1, sideOfSidePoint, poly) {
+   
         const result = [];
 
         for (let i = 0; i < poly.length; i++) {
             const current = poly[i];
             const next = poly[(i + 1) % poly.length];
 
-            const currentSide = side(current.x, current.y);
+            const currentSide = Geom.SideOfPointFromLine(p0, p1, current);
 
             // Include the current point if it's on the same side as the sidePoint
             if (currentSide * sideOfSidePoint >= 0) {
@@ -312,15 +214,14 @@ const Geom = {
             }
 
             // Check if the edge intersects the line
-			const intersection = Geom.PointFromIntersectionOfLinesInPlane(
-				{ x0, y0, x1, y1 },
-				{ x0: current.x, y0: current.y, x1: next.x, y1: next.y }
-			);
+            const intersection = Geom.PointFromIntersectionOfLinesInPlane(
+                {p0, p1},
+                {p0: current, p1: next}
+            );
 
-			if (intersection && intersection.l >= 0 && intersection.l <= 1) {
-				result.push({ x: intersection.x, y: intersection.y });
-			}
- 
+            if (intersection && intersection.l >= 0 && intersection.l <= 1) {
+                result.push(intersection.point);
+            }
         }
 
         // Sort the resulting polygon vertices in counter-clockwise order
@@ -359,7 +260,7 @@ const Geom = {
 
         // Calculate the distance from the point to the plane along the normal
         const distance = (vectorToPlane[0] * nx + vectorToPlane[1] * ny + vectorToPlane[2] * nz) /
-                 (nx ** 2 + ny ** 2 + nz ** 2);
+            (nx ** 2 + ny ** 2 + nz ** 2);
 
         // Calculate the perpendicular point on the plane
         const perpendicularPoint = [
@@ -369,6 +270,65 @@ const Geom = {
         ];
 
         return perpendicularPoint;
+    },
+    /**
+      * Calculates the distance squared between two points
+      *
+      * @param {number[]} p0 - The coordinates of the point.
+      * @param {number[]} p1 - The coordinates of the point.
+      * @returns {number} The square of the distance
+      */
+    Distance2BetweenPoints(p0, p1) {
+        const d0 = p0.length;
+        const d1 = p1.length;
+        const maxDim = Math.max(d0, d1);
+        let sumSquares = 0;
+
+        for (let i = 0; i < maxDim; i++) {
+            const v0 = i < d0 ? p0[i] : 0;
+            const v1 = i < d1 ? p1[i] : 0;
+            sumSquares += (v1 - v0) ** 2;
+        }
+
+        return sumSquares;
+    },
+    /**
+     * Calculates the intersection of a line through two points with a plane.
+     *
+     * @param {number[]} p0 - The coordinates of the point in 3D space as [x, y, z].
+     * @param {number[]} p1 - The coordinates of the point in 3D space as [x, y, z].
+     * @param {{point: number[], normal: number[]}} plane - The plane defined by a point on the plane 
+     *                                                      ([x, y, z]) and its normal vector ([x, y, z]).
+     * @returns {number[]} The coordinates of the perpendicular point on the plane as [x, y, z].
+     */
+    PointFromIntersectionOfLineAndPlane(p0, p1, plane) {
+        const [x0, y0, z0] = p0;
+        const [x1, y1, z1] = p1;
+        const [px, py, pz] = plane.point;
+        const [nx, ny, nz] = plane.normal;
+
+        // Vector along the line
+        const dx = x1 - x0;
+        const dy = y1 - y0;
+        const dz = z1 - z0;
+
+        // Calculate denominator
+        const denom = nx * dx + ny * dy + nz * dz;
+
+        // Check if line is parallel to plane
+        if (Math.abs(denom) < 1e-10) {
+            return null;
+        }
+
+        // Calculate t parameter of line
+        const t = (nx * (px - x0) + ny * (py - y0) + nz * (pz - z0)) / denom;
+
+        // Calculate intersection point
+        return [
+            x0 + t * dx,
+            y0 + t * dy,
+            z0 + t * dz
+        ];
     },
     /**
      * Generates a best-fit line segment from an array of points.

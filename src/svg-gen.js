@@ -1,6 +1,9 @@
 // src/svg-gen.js
 
-import { allElementsOptions, svgTypes } from "./svg/svg-types.js";
+import { svgTypes } from "./svg/svg-types.js";
+import { addWithPerspective } from "./svg/svg-perspective.js";
+
+addWithPerspective(svgTypes);
 
 function node(type, spec, options, children, s) {
     this.type = type;
@@ -12,37 +15,48 @@ function node(type, spec, options, children, s) {
     }
 
     const optionsList = [];
+    const setOptions = options || {};
     const specOptions = spec.options || [];
-    const allOptions = [...specOptions, ...allElementsOptions];
+    const allOptions = [...specOptions];
     allOptions.forEach(opt => {
         const haveOptVal = opt.name in options;
         if (opt.default || haveOptVal) {
-            optionsList.push({
+            let value = haveOptVal ? options[opt.name] : opt.default;
+            if(opt.fromSVGString && typeof value === 'string') {
+                value = opt.fromSVGString(value);
+            }
+            const optWithValue = {
                 name: opt.name,
-                value: haveOptVal ? options[opt.name] : opt.default
-            });
+                value
+            };
+            optionsList.push(optWithValue);
+            setOptions[opt.name] = optWithValue.value;
         }
     });
-    this.options = options;
+    this.options = setOptions;
     this.optionsList = optionsList;
 
     return this;
 }
 
 node.prototype.With = function (opts) {
-   this.with_opts = opts;
-   return this;
+    this.with_opts = opts;
+    return this;
 }
 
 node.prototype.renderForm = function (renderContext) {
     const opts = this.with_opts;
+    if(this.options._clipP) {
+        const pts = this.options._clipP;
+       // console.log(pts);
+    }
 
-    if(opts?.perspective) {
+    if (opts?.perspective) {
         return this.withPerspective(opts.perspective, renderContext);
     }
 
     return this;
- }
+}
 
 
 node.prototype.withPerspective = function (opts, renderContext) {
@@ -52,9 +66,6 @@ node.prototype.withPerspective = function (opts, renderContext) {
     }
     return withPerspective.call(this, opts, renderContext)
 }
-
-
-
 
 function svgGen(options) {
     this.options = options || {};
@@ -70,13 +81,12 @@ function svgGen(options) {
 
 function treeWalker(node, context, handlers) {
     const { open, close } = handlers;
-    const renderNode = node.renderForm ? node.renderForm(context): node;
+    const renderNode = node.renderForm ? node.renderForm(context) : node;
     const newContext = { ...context, depth: context.depth + 1 };
-    if(node.type === "svg") {
+    if (node.type === "svg") {
         const viewBoxOption = renderNode.options.viewBox;
         if (viewBoxOption) {
-            const [x, y, width, height] = viewBoxOption.split(' ').map(Number);
-            newContext.viewBox = { x, y, width, height };
+            newContext.viewBox = viewBoxOption;
         }
     }
     const spacing = ' '.repeat(context.depth * 2);
@@ -87,10 +97,10 @@ function treeWalker(node, context, handlers) {
     }
 
     if (renderNode.children) {
-   
+
 
         renderNode.children.forEach(child => {
-            result += treeWalker(child, {...newContext}, handlers);
+            result += treeWalker(child, { ...newContext }, handlers);
         });
     }
 
@@ -101,8 +111,17 @@ function treeWalker(node, context, handlers) {
     return result;
 }
 
+function optionsToSVGString(type, name, value) {
+    const optionMap = svgTypes[type].optionsMap;
+    const option = optionMap[name];
+    if(option.toSVGString && typeof value !== 'string') {
+        return option.toSVGString(value);
+    }
+    return String(value)
+} 
+
 export function parseToText(node) {
-    return treeWalker(node, {depth: 0}, {
+    return treeWalker(node, { depth: 0 }, {
         open: (n) => {
             if (typeof n === "string") {
                 return n;
@@ -110,7 +129,8 @@ export function parseToText(node) {
             let val = [
                 `<${n.type}`,
                 ...n.optionsList.map(opt => {
-                    return `${opt.name}="${opt.value}"`;
+                    const strVal = optionsToSVGString(n.type, opt.name, opt.value);
+                    return `${opt.name}="${strVal}"`;
                 })
             ].join(" ");
             if (n.children) {

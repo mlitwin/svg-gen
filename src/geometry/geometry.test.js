@@ -35,25 +35,6 @@ beforeAll(() => {
 });
 
 describe('Geom', () => {
-    /*
-    describe('EllipseFromPoints', () => {
-        it('should return a Matrix object from an array of points', () => {
-            const points = [
-                { x: 1, y: 2 },
-                { x: 3, y: 4 },
-                { x: 5, y: 6 },
-            ];
-            const result = Geom.EllipseFromPoints(points);
-
-            expect(result).toBeInstanceOf(Matrix);
-            expect(result.rows).toEqual([
-                [1, 4, 2, 1, 2],
-                [9, 16, 12, 3, 4],
-                [25, 36, 30, 5, 6],
-            ]);
-        });
-    });
-    */
 
     describe('PerspectiveXYProjection', () => {
         it('should project 3D points onto a 2D plane', () => {
@@ -91,88 +72,7 @@ describe('Geom', () => {
             ]);
         });
     });
-    describe('EllipseFromPoints', () => {
-        it('should compute ellipse coefficients from an array of points', () => {
-            const points = [
-                { x: 1, y: 0 },
-                { x: 0, y: 1 },
-                { x: -1, y: 0 },
-                { x: 0, y: -1 },
-                { x: Math.SQRT1_2, y: Math.SQRT1_2 },
-            ];
 
-            const result = Geom.EllipseFromPoints(points);
-
-            expect(result).toBeCloseToObject({
-                A: 1,
-                B: 0,
-                C: 1,
-                D: 0,
-                E: 0,
-            });
-        });
-
-        it('should return coefficients that satisfy the ellipse equation for the given points', () => {
-            const points = [
-                { x: 1, y: 2 },
-                { x: 2, y: 3 },
-                { x: 3, y: 7 },
-                { x: 4, y: 10 },
-                { x: 5, y: 11 },
-            ];
-
-            const { A, B, C, D, E } = Geom.EllipseFromPoints(points);
-
-            points.forEach(({ x, y }) => {
-                const equationResult = A * x ** 2 + B * x * y + C * y ** 2 + D * x + E * y;
-                expect(equationResult).toBeCloseTo(1, 5);
-            });
-        });
-    });
-    describe('EllipseStandardForm', () => {
-        it('should compute the standard form of an ellipse from given coefficients', () => {
-            const coefficients = {
-                A: 1,
-                B: 0,
-                C: 1,
-                D: 0,
-                E: 0,
-            };
-
-            const result = Geom.EllipseStandardForm(coefficients);
-
-            expect(result).toBeCloseToObject({
-                cx: 0,
-                cy: 0,
-                rx: 1,
-                ry: 1,
-                theta: 0,
-            })
-        });
-
-        it('should compute the standard form of a translated ellipse', () => {
-            // (x-1)^2 + (y-2)^2 - 1 = 0
-            // x^2 + y^2 - 2x - 4y + 4 = 0
-            const coefficients = {
-                A: 1 / -4,
-                B: 0,
-                C: 1 / -4,
-                D: -2 / -4,
-                E: -4 / -4,
-            };
-            // 
-
-            const result = Geom.EllipseStandardForm(coefficients);
-
-            expect(result).toBeCloseToObject({
-                cx: 1,
-                cy: 2,
-                rx: 1,
-                ry: 1,
-                theta: 0,
-            });
-        });
-    });
     describe('PointsWithPerspective', () => {
         it('should compute points with perspective transformation applied', () => {
             const points = new Matrix([
@@ -197,29 +97,7 @@ describe('Geom', () => {
         });
 
     });
-    describe('EllipseWithPerspective', () => {
-        it('should compute the ellipse coefficients with perspective transformation applied', () => {
-
-            const eye = { x: 0, y: 0, z: 2 };
-            const transform = new Matrix([
-                [1, 0, 0, 0],
-                [0, 1, 0, 0],
-                [0, 0, 1, 0],
-                [0, 0, 0, 1],
-            ]);
-
-            const result = Geom.EllipseWithPerspective(0, 0, 2, 1, eye, transform);
-            const expected = {
-                cx: 0,
-                cy: 0,
-                rx: 2,
-                ry: 1,
-                theta: 0,
-            };
-
-            expect(result.ellipse).toBeCloseToObject(expected);
-        });
-    });
+ 
     describe('LineFromIntersectionOfPlanes', () => {
         it('should compute the intersection line of two planes', () => {
             const plane1 = {
@@ -241,26 +119,23 @@ describe('Geom', () => {
     });
     describe('PointFromIntersectionOfLinesInPlane', () => {
         it('should compute the intersection point of two lines in a plane', () => {
-            const line1 = {
-                x0: 0, y0: 0, x1: 4, y1: 4
-            };
-            const line2 = {
-                x0: 0, y0: 4, x1: 4, y1: 0
-            };
+            const line1 = { p0: {x:0, y:0}, p1: {x:4, y:4}};
+
+            const line2 = { p0: {x:0, y:4}, p1: {x:4, y:0}};
+
 
             const result = Geom.PointFromIntersectionOfLinesInPlane(line1, line2);
 
             expect(result).toBeCloseToObject({
-                x: 2,
-                y: 2,
+                point: {x: 2, y: 2},
                 l: 0.5,
             });
         });
     });
     describe('PolygonFromLineIntersectionPolygon', () => {
         it('should compute the intersection of a line with a polygon and return the resulting polygon', () => {
-            const line = { x0: 2, y0: 0, x1: 2, y1: 4 };
-            const sidePoint = { x: 0, y: 0 };
+            const line = { p0: {x:2, y:0}, p1: {x:2, y:4}};
+            const sidePoint = 1;
             const polygon = [
                 { x: 0, y: 0 },
                 { x: 4, y: 0 },
@@ -268,7 +143,7 @@ describe('Geom', () => {
                 { x: 0, y: 4 },
             ];
 
-            const result = Geom.PolygonFromLineIntersectionPolygon(line, sidePoint, polygon);
+            const result = Geom.PolygonFromLineIntersectionPolygon(line.p0, line.p1, sidePoint, polygon);
 
             expect(result).toBeCloseToObject([
                 { x: 0, y: 0 },
@@ -278,8 +153,9 @@ describe('Geom', () => {
             ]);
         });
         it('should compute the intersection of a line with a polygon and where the line hits vertices of the polygon ', () => {
-            const line = { x0: 0, y0: 0, x1: 4, y1: 4 };
-            const sidePoint = { x: 0, y: 0 };
+            const line = { p0: {x:0, y:0}, p1: {x:4, y:4}};
+
+            const sidePoint = 0;
             const polygon = [
                 { x: 0, y: 0 },
                 { x: 4, y: 0 },
@@ -287,7 +163,7 @@ describe('Geom', () => {
                 { x: 0, y: 4 },
             ];
 
-            const result = Geom.PolygonFromLineIntersectionPolygon(line, sidePoint, polygon);
+            const result = Geom.PolygonFromLineIntersectionPolygon(line.p0, line.p1, sidePoint, polygon);
 
             expect(result).toBeCloseToObject([
                 { x: 0, y: 0 },

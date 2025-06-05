@@ -3,7 +3,7 @@ import { Matrix } from './src/matrix/matrix.js';
 import fs from 'fs';
 
 function latitude(context, i, n, R) {
-    const l = i * (Math.PI / 2) / n;
+    const l = i * (Math.PI) / n;
     const dy = Math.round(Math.sin(l) * R);
     const r = Math.abs(Math.cos(l) * R);
 
@@ -19,7 +19,7 @@ function latitude(context, i, n, R) {
     ];
     const opts = {
         cx: 0, cy: 0, r, fill: "none",
-        stroke: "black",
+        stroke: i == 0 ? "green" : "black",
         'stroke-width': i == 0 ? 2 : 1
     };
     const perspective = {
@@ -32,7 +32,7 @@ function latitude(context, i, n, R) {
 }
 
 function longitude(context, i, n, R) {
-    const l = i * (Math.PI / 2) / n;
+    const l = i * (Math.PI) / n;
 
     const transform = [
         {
@@ -43,8 +43,6 @@ function longitude(context, i, n, R) {
             op: "Rotate",
             args: { axes: "Y", angle: l }
         },
-
-
     ];
 
     const opts = {
@@ -52,13 +50,16 @@ function longitude(context, i, n, R) {
         stroke: "black",
         'stroke-width': i === n ? 2 : 1
     };
+    if (i == n) {
+        opts.stroke = "green";
+    }
     const perspective = {
         eye: context.eye,
         transform: Matrix.Identity(4).Transform(transform),
         clip: context.clip
     }
 
-    return context.s.circle(opts).With({ perspective });
+    return [context.s.circle(opts).With({ perspective })];
 }
 
 function makeRange(first, last) {
@@ -71,32 +72,148 @@ function makeRange(first, last) {
 
 const R = 250;
 
+function makeLongitudeArrow(context, phi, theta) {
+    const s = context.s;
+    const x = Math.sin(theta) * R;
+    const y = Math.cos(theta) * R;
+
+    const perspective = {
+        eye: context.eye,
+        transform: Matrix.Identity(4),
+        clip: context.clip
+    }
+
+    const d = `M 0 -${R} A ${R} ${R} 0 0 1 ${x} ${-y}`;
+    const meridian = s.path({
+        d,
+        fill: "none",
+        stroke: "red",
+        'stroke-width': 2
+    }).With({ perspective });
+
+    const transform = [
+        {
+            op: "Rotate",
+            args: { axes: "Y", angle: -(Math.PI / 2 - phi) }
+        },
+    ];
+
+    const perspectivePhi = {
+        eye: context.eye,
+        transform: Matrix.Identity(4).Transform(transform),
+        clip: context.clip
+    }
+    
+
+    const long = s.path({
+        d,
+        fill: "none",
+        stroke: "yellow",
+        'stroke-width': 3,
+        'marker-end': "url(#arrowhead)"
+    }).With({ perspective: perspectivePhi });
+
+    return [meridian, long];
+
+}
+
+function makeLatitudeArrow(context, phi, theta) {
+    const s = context.s;
+
+    const dy = Math.cos(theta) * R;
+    const r = Math.abs(Math.sin(theta) * R);
+    const x = r * Math.sin(phi);
+    const y = r * Math.cos(phi);
+
+    const transform = [
+        {
+            op: "Translate",
+            args: { vec: [0, -dy, 0] }
+        },
+        {
+            op: "Rotate",
+            args: { axes: "X", angle: Math.PI / 2 }
+        },
+    ];
+
+    const perspective = {
+        eye: context.eye,
+        transform: Matrix.Identity(4).Transform(transform),
+        clip: context.clip
+    }
+
+    const d = `M ${r} 0 A ${r} ${r} 0 0 1 ${x} ${-y} `;
+    const lat = s.path({
+        d: d,
+        fill: "none",
+        stroke: "blue",
+        'stroke-width': 3,
+        'marker-end': "url(#arrowhead)"
+    }).With({ perspective });
+    return [lat];
+}
+
+
 function makeSphere(context) {
-    const svg = context.s.svg({
+    const s = context.s;
+    const N = 2 * 16;
+    const phi = 29 * (Math.PI) / N;
+    const theta = 13 * (Math.PI) / N;
+    const svg = s.svg({
         width: 600,
         height: 600,
         viewBox: "-300 -300 600 600"
     }, [
-        ...makeRange(-16, 16).map(i => {
-            return longitude(context, i, 16, R);
-        }),
-        ...makeRange(-16, 16).map(i => {
-            return latitude(context, i, 16, R);
-        }),
+        s.defs({}, [
+            s.marker({
+                id: "arrowhead",
+                markerWidth: 16,
+                markerHeight: 7,
+                refX: 0,
+                refY: 1.75,
+                orient: "auto"
+            }, [
+                s.rect({ x: 0, y: 1.25, width: 3, height: 1, fill: "red" }),
+                // Arrowhead polygon attached to end of rect
+                s.polygon({ points: `3 0, 7 1.75, 3 3.5`, fill: "red" })
+            ])
+        ]),
+
+        ...makeRange(0, N).map(i => {
+            return longitude(context, i, N, R);
+        }).flat(),
+        ...makeLongitudeArrow(context, phi, theta),
+        
+        ...makeRange(-N, N).map(i => {
+            return latitude(context, i, N, R);
+       }),
+       
+        ...makeLatitudeArrow(context, phi, theta),
+        
+        
     ]);
 
     return svg;
 }
 
-const Z = -2500;
-const eye = { x: 0, y: 0, z: Z - R * R / Z };
-const eyeNorm = Math.sqrt(eye.x * eye.x + eye.y * eye.y + eye.z * eye.z);
+const Z = 2500;
+//const eye = { x: 0, y: 0, z: Z - R * R / Z };
+const eye = { x: 0, y: 0, z: Z };
+const clipCenter = { x: 0, y: 0, z: R * R / Z};
+const clipNorm = Math.sqrt((eye.x - clipCenter.x)**2 + (eye.y - clipCenter.y)**2 + (eye.z - clipCenter.z)**2);
+
+const clipNormal = {
+    x: (eye.x - clipCenter.x) / clipNorm,
+    y: (eye.y - clipCenter.y) / clipNorm,
+    z: (eye.z - clipCenter.z) / clipNorm
+};
+
 const context = {
     eye,
     clip: {
         plane: {
-            point: [0, 0, 0],
-            normal: [eye.x / eyeNorm, eye.y / eyeNorm, eye.z / eyeNorm]
+            point: [clipCenter.x, clipCenter.y, clipCenter.z],
+            normal: [clipNormal.x,clipNormal.y, clipNormal.z]
         }
     },
     s: new svgGen({}),
