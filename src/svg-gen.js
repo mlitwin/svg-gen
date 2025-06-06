@@ -115,13 +115,9 @@ function svgGen(options) {
     return this;
 }
 
-function clone(obj) {
-    return JSON.parse(JSON.stringify(obj));
-}
-
 function treeWalker(node, context, handlers) {
     const { open, close } = handlers;
-    const newContext = node.createRenderContext ? node.createRenderContext(context): clone(context);
+    const newContext = node.createRenderContext ? node.createRenderContext(context): context;
     const renderNode = node.renderForm ? node.renderForm(newContext) : node;
     const spacing = ' '.repeat(context.depth * 2);
     let result = '';
@@ -131,8 +127,6 @@ function treeWalker(node, context, handlers) {
     }
 
     if (renderNode.children) {
-
-
         renderNode.children.forEach(child => {
             result += treeWalker(child, newContext, handlers);
         });

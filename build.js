@@ -186,7 +186,6 @@ function makeSphere(context, perspective) {
 }
 
 const Z = 2500;
-//const eye = { x: 0, y: 0, z: Z - R * R / Z };
 const eye = { x: 0, y: 0, z: Z };
 const clipCenter = { x: 0, y: 0, z: R * R / Z };
 const clipNorm = Math.sqrt((eye.x - clipCenter.x) ** 2 + (eye.y - clipCenter.y) ** 2 + (eye.z - clipCenter.z) ** 2);
@@ -197,17 +196,6 @@ const clipNormal = {
     z: (eye.z - clipCenter.z) / clipNorm
 };
 
-const context = {
-    eye,
-    clip: {
-        plane: {
-            point: [clipCenter.x, clipCenter.y, clipCenter.z],
-            normal: [clipNormal.x, clipNormal.y, clipNormal.z]
-        }
-    },
-    s: new svgGen({}),
-    skew: 0
-}
 
 const perspective = {
     eye,
@@ -217,6 +205,11 @@ const perspective = {
             normal: [clipNormal.x, clipNormal.y, clipNormal.z]
         }
     }
+}
+
+const context = {
+    s: new svgGen({}),
+    skew: 0
 }
 
 const sphereStandard = makeSphere(context, perspective);

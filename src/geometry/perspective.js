@@ -208,15 +208,9 @@ function PolygonFromViewBoxWithPerspective(viewBox, perspective) {
         return null;
     }
 
-    const perspectivePoints = ClipXYHalfPlane(perspective);
-   // console.log(perspectivePoints)
     if (!perspectivePoints) {
         return null;
     }
-
-
-   // const line = { x0: perspectivePoints.points[0].x, y0: perspectivePoints.points[0].y, x1: perspectivePoints.[1].x, y1: perspectivePoints[1].y };
-   // const directionalPoint = perspectivePoints[2];
 
     return Geom.PolygonFromLineIntersectionPolygon(perspectivePoints.points[0], perspectivePoints.points[1], perspectivePoints.side, viewBoxVertices);
 }

@@ -40,7 +40,6 @@ function setClipPath(opts, perspective, renderContext, transform = Matrix.Identi
     const clipP = PolygonFromViewBoxWithPerspective(renderContext.viewBox, perspective);
 
     const clipPath = makeClipPath(clipP, transform);
-    // console.log(clipP, clipPath);
 
     if (clipPath) {
         opts["clip-path"] = clipPath;
