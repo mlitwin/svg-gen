@@ -7,6 +7,10 @@ NPM: [@mlitwin/svg-gen](https://www.npmjs.com/package/@mlitwin/svg-gen)
 
 ![Sphere](https://antoninus.org/svg-gen/generated/spherestandard.svg)
 
+## Status
+
+Alpha software being hacked on.
+
 ## Usage
 
 ```javascript
@@ -55,11 +59,9 @@ The `With()` method applies a perspective transformation to a `circle` or `ellip
 
 - `perspective` (Object): An object containing the following properties:
   - `eye` (Object): The eye position for the perspective transformation.
-  - `transform` (Object): The transformation matrix to apply.
+  - `transform` (Object): The 3D transformation matrix to apply to the object as defined in the XY Plane
+  - `clip` { plane: {point, normal} }: Clipping region in 3D space. Supports a plane defined by a point and a normal.
 
-#### Returns
-
-An SVG `ellipse` element with the specified properties and transformations.
 
 #### Example
 
@@ -99,7 +101,7 @@ const svg = s.svg({}, [
     ]
 );
 
-    return context.s.circle(opts).With(perspective);
+return context.s.circle(opts).With(perspective);
 
 console.debug(parseToText(svg));
 ```
@@ -108,37 +110,8 @@ console.debug(parseToText(svg));
 
 [Github Pages](https://antoninus.org/svg-gen/)
 
+
 # References
 
-## Spherical Coordinate Systems
-
-* https://en.wikipedia.org/wiki/Spherical_coordinate_system
-
-## Matrices
-
-### Singular Value Decomposition
-
-* https://en.wikipedia.org/wiki/Singular_value_decomposition
-* https://github.com/danilosalvati/svd-js
-
-### Affine Transformation Matrices
-
-* https://en.wikipedia.org/wiki/Affine_transformation
-
-## Perspective Transform
-
-* https://en.wikipedia.org/wiki/3D_projection#Perspective_projection
-
-### SVG and CSV Perspective Transform
-
-* https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/transform
-* https://developer.mozilla.org/en-US/docs/Web/CSS/perspective
-* https://developer.mozilla.org/en-US/docs/Web/CSS/transform
-
-## Ellipses
-
-* https://en.wikipedia.org/wiki/Matrix_representation_of_conic_sections
-* https://en.wikipedia.org/wiki/Conic_section#Conversion_to_canonical_form
-* https://en.wikipedia.org/wiki/Ellipse#Canonical_form
-
+See [References.md](./References.md)
 
