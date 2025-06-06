@@ -23,9 +23,7 @@ function latitude(context, i, n, R) {
         'stroke-width': i == 0 ? 2 : 1
     };
     const perspective = {
-        eye: context.eye,
         transform: Matrix.Identity(4).Transform(transform),
-        clip: context.clip,
     }
 
     return context.s.circle(opts).With({ perspective });
@@ -54,9 +52,7 @@ function longitude(context, i, n, R) {
         opts.stroke = "green";
     }
     const perspective = {
-        eye: context.eye,
-        transform: Matrix.Identity(4).Transform(transform),
-        clip: context.clip
+        transform: Matrix.Identity(4).Transform(transform)
     }
 
     return [context.s.circle(opts).With({ perspective })];
@@ -78,9 +74,7 @@ function makeLongitudeArrow(context, phi, theta) {
     const y = Math.cos(theta) * R;
 
     const perspective = {
-        eye: context.eye,
-        transform: Matrix.Identity(4),
-        clip: context.clip
+        transform: Matrix.Identity(4)
     }
 
     const d = `M 0 -${R} A ${R} ${R} 0 0 1 ${x} ${-y}`;
@@ -99,11 +93,8 @@ function makeLongitudeArrow(context, phi, theta) {
     ];
 
     const perspectivePhi = {
-        eye: context.eye,
         transform: Matrix.Identity(4).Transform(transform),
-        clip: context.clip
     }
-    
 
     const long = s.path({
         d,
@@ -137,9 +128,7 @@ function makeLatitudeArrow(context, phi, theta) {
     ];
 
     const perspective = {
-        eye: context.eye,
-        transform: Matrix.Identity(4).Transform(transform),
-        clip: context.clip
+        transform: Matrix.Identity(4).Transform(transform)
     }
 
     const d = `M ${r} 0 A ${r} ${r} 0 0 1 ${x} ${-y} `;
@@ -154,7 +143,7 @@ function makeLatitudeArrow(context, phi, theta) {
 }
 
 
-function makeSphere(context) {
+function makeSphere(context, perspective) {
     const s = context.s;
     const N = 2 * 16;
     const phi = 29 * (Math.PI) / N;
@@ -183,15 +172,15 @@ function makeSphere(context) {
             return longitude(context, i, N, R);
         }).flat(),
         ...makeLongitudeArrow(context, phi, theta),
-        
+
         ...makeRange(-N, N).map(i => {
             return latitude(context, i, N, R);
-       }),
-       
+        }),
+
         ...makeLatitudeArrow(context, phi, theta),
-        
-        
-    ]);
+
+
+    ]).With({ perspective });
 
     return svg;
 }
@@ -199,8 +188,8 @@ function makeSphere(context) {
 const Z = 2500;
 //const eye = { x: 0, y: 0, z: Z - R * R / Z };
 const eye = { x: 0, y: 0, z: Z };
-const clipCenter = { x: 0, y: 0, z: R * R / Z};
-const clipNorm = Math.sqrt((eye.x - clipCenter.x)**2 + (eye.y - clipCenter.y)**2 + (eye.z - clipCenter.z)**2);
+const clipCenter = { x: 0, y: 0, z: R * R / Z };
+const clipNorm = Math.sqrt((eye.x - clipCenter.x) ** 2 + (eye.y - clipCenter.y) ** 2 + (eye.z - clipCenter.z) ** 2);
 
 const clipNormal = {
     x: (eye.x - clipCenter.x) / clipNorm,
@@ -213,17 +202,27 @@ const context = {
     clip: {
         plane: {
             point: [clipCenter.x, clipCenter.y, clipCenter.z],
-            normal: [clipNormal.x,clipNormal.y, clipNormal.z]
+            normal: [clipNormal.x, clipNormal.y, clipNormal.z]
         }
     },
     s: new svgGen({}),
     skew: 0
 }
 
-const sphereStandard = makeSphere(context);
+const perspective = {
+    eye,
+    clip: {
+        plane: {
+            point: [clipCenter.x, clipCenter.y, clipCenter.z],
+            normal: [clipNormal.x, clipNormal.y, clipNormal.z]
+        }
+    }
+}
+
+const sphereStandard = makeSphere(context, perspective);
 
 context.skew = Math.PI / 8;
-const sphereSkew = makeSphere(context);
+const sphereSkew = makeSphere(context, perspective);
 
 fs.writeFileSync('docs/generated/spherestandard.svg', parseToText(sphereStandard));
 fs.writeFileSync('docs/generated/sphereskew.svg', parseToText(sphereSkew));

@@ -62,8 +62,9 @@ function setClipPath(opts, perspective, renderContext, transform = Matrix.Identi
  * @param {number} [opts.ry] - The y-radius of the ellipse (used for ellipses).
  * @returns {Object} An SVG ellipse element with the specified properties and transformations.
  */
-function elementFromCircleOrEllipse(perspective, renderContext) {
+function elementFromCircleOrEllipse(renderContext) {
     const opts = JSON.parse(JSON.stringify(this.options));
+    const perspective = renderContext.with_opts.perspective;
 
     const geomOpts = extractElements(["cx", "cy", "r", "rx", "ry"], opts);
 
@@ -181,9 +182,11 @@ function pathCommandFromArc(cur, av, perspective, _this) {
     }
 }
 
-function elementFromPath(perspective, renderContext) {
+function elementFromPath(renderContext) {
     const opts = JSON.parse(JSON.stringify(this.options));
     const d = opts.d;
+    const perspective = renderContext.with_opts.perspective;
+
 
     const pD = [];
     walkSVGPathDArray(d, (op, args, absoluteArgs, cur) => {

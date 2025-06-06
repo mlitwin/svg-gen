@@ -22,7 +22,7 @@ function node(type, spec, options, children, s) {
         const haveOptVal = opt.name in options;
         if (opt.default || haveOptVal) {
             let value = haveOptVal ? options[opt.name] : opt.default;
-            if(opt.fromSVGString && typeof value === 'string') {
+            if (opt.fromSVGString && typeof value === 'string') {
                 value = opt.fromSVGString(value);
             }
             const optWithValue = {
@@ -39,32 +39,68 @@ function node(type, spec, options, children, s) {
     return this;
 }
 
+function deepMerge(target, source) {
+    if (typeof target !== 'object' || target === null) return source;
+    if (typeof source !== 'object' || source === null) return target;
+
+    const merged = Array.isArray(target) ? [...target] : { ...target };
+
+    Object.keys(source).forEach(key => {
+        if (source[key] && typeof source[key] === 'object' && !Array.isArray(source[key])) {
+            merged[key] = deepMerge(target[key], source[key]);
+        } else {
+            merged[key] = source[key];
+        }
+    });
+
+    return merged;
+}
+
+node.prototype.createRenderContext = function(previousContext) {
+    const newContext = previousContext ? JSON.parse(JSON.stringify(previousContext)) : { depth: -1 };
+
+    if (this.type === "svg") {
+        const viewBoxOption = this.options?.viewBox;
+        if (viewBoxOption) {
+            newContext.viewBox = viewBoxOption;
+        }
+    }
+
+    if(this.with_opts) {
+        newContext.with_opts = deepMerge(newContext.with_opts, this.with_opts);
+    }
+
+    newContext.depth++;
+
+    return newContext;
+}
+
 node.prototype.With = function (opts) {
     this.with_opts = opts;
     return this;
 }
 
 node.prototype.renderForm = function (renderContext) {
-    const opts = this.with_opts;
-    if(this.options._clipP) {
+    const opts = renderContext.with_opts;
+    if (this.options._clipP) {
         const pts = this.options._clipP;
-       // console.log(pts);
+        // console.log(pts);
     }
 
     if (opts?.perspective) {
-        return this.withPerspective(opts.perspective, renderContext);
+        return this.withPerspective(renderContext);
     }
 
     return this;
 }
 
 
-node.prototype.withPerspective = function (opts, renderContext) {
+node.prototype.withPerspective = function (renderContext) {
     const withPerspective = svgTypes[this.type].withPerspective;
     if (!withPerspective) {
-        throw new Error(`withPerspective is not defined for ${this.type}`);
-    }
-    return withPerspective.call(this, opts, renderContext)
+        return this;
+    }``
+    return withPerspective.call(this, renderContext)
 }
 
 function svgGen(options) {
@@ -79,16 +115,14 @@ function svgGen(options) {
     return this;
 }
 
+function clone(obj) {
+    return JSON.parse(JSON.stringify(obj));
+}
+
 function treeWalker(node, context, handlers) {
     const { open, close } = handlers;
-    const renderNode = node.renderForm ? node.renderForm(context) : node;
-    const newContext = { ...context, depth: context.depth + 1 };
-    if (node.type === "svg") {
-        const viewBoxOption = renderNode.options.viewBox;
-        if (viewBoxOption) {
-            newContext.viewBox = viewBoxOption;
-        }
-    }
+    const newContext = node.createRenderContext ? node.createRenderContext(context): clone(context);
+    const renderNode = node.renderForm ? node.renderForm(newContext) : node;
     const spacing = ' '.repeat(context.depth * 2);
     let result = '';
 
@@ -100,7 +134,7 @@ function treeWalker(node, context, handlers) {
 
 
         renderNode.children.forEach(child => {
-            result += treeWalker(child, { ...newContext }, handlers);
+            result += treeWalker(child, newContext, handlers);
         });
     }
 
@@ -114,11 +148,11 @@ function treeWalker(node, context, handlers) {
 function optionsToSVGString(type, name, value) {
     const optionMap = svgTypes[type].optionsMap;
     const option = optionMap[name];
-    if(option.toSVGString && typeof value !== 'string') {
+    if (option.toSVGString && typeof value !== 'string') {
         return option.toSVGString(value);
     }
     return String(value)
-} 
+}
 
 export function parseToText(node) {
     return treeWalker(node, { depth: 0 }, {
