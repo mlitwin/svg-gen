@@ -403,4 +403,31 @@ Matrix.prototype.det = function () {
     throw new Error("Determinant not implemented for matrices larger than 3x3");
 }
 
-export { Matrix };
+function Vector(n) {
+    if (Array.isArray(n)) {
+        n.forEach(v => {
+            this.push(v);
+        });
+        return;
+    }
+    this.push(...new Array(n).fill(0));
+}
+
+Vector.prototype = [];
+
+Object.defineProperties(Vector.prototype, {
+    x: {
+        get() { return this[0]; },
+        set(v) { this[0] = v; }
+    },
+    y: {
+        get() { return this[1]; },
+        set(v) { this[1] = v; }
+    },
+    z: {
+        get() { return this[2]; },
+        set(v) { this[2] = v; }
+    }
+});
+
+export { Matrix, Vector };
