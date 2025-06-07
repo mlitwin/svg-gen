@@ -11,6 +11,12 @@ NPM: [@mlitwin/svg-gen](https://www.npmjs.com/package/@mlitwin/svg-gen)
 
 Alpha software being hacked on.
 
+## Work Plan Notes
+
+* More on Vector class: Matrix.Cols() return array of Vector(). 
+* Turn build.js into a more generic set of web pages as examples each x.js makes an x.svg. Beginning of e2e
+* svg-types is data driven which is fast to start, but probably better to just make SVGElement hierarchy mirroring W3C standard
+
 ## Usage
 
 ```javascript
