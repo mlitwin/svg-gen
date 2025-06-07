@@ -1,4 +1,4 @@
-import { Matrix } from "../matrix/matrix.js";
+import { Matrix, Vector } from "../matrix/matrix.js";
 import Geom from "./geometry.js";
 
 
@@ -52,9 +52,9 @@ function ClipXYHalfPlane(perspective) {
     const eyePoint = [eye.x, eye.y, eye.z];
 
     const affinePoints = new Matrix([
-        [intersectionLine.point[0], intersectionLine.point[1], intersectionLine.point[2], 1],
-        [intersectionLine.point[0] + intersectionLine.direction[0], intersectionLine.point[1] + intersectionLine.direction[1], intersectionLine.point[2] + intersectionLine.direction[2], 1],
-    ]).Transpose();
+        Vector([intersectionLine.point[0], intersectionLine.point[1], intersectionLine.point[2], 1]),
+        Vector([intersectionLine.point[0] + intersectionLine.direction[0], intersectionLine.point[1] + intersectionLine.direction[1], intersectionLine.point[2] + intersectionLine.direction[2], 1]),
+    ]);
 
     const perspectivePoints = Geom.PerspectiveXYProjection(eye, affinePoints);
     const p0 = perspectivePoints[0];
@@ -223,7 +223,7 @@ function PointWithPerspective(x, y, eye, transform) {
         throw new Error("Transform matrix must be 4x4.");
     }
 
-    const point = new Matrix([[x, y, 0, 1]]).Transpose();
+    const point = new Matrix(Vector([[x, y, 0, 1]]));
     const transformed = transform.Mult(point);
 
     const perspectivePoints = Geom.PerspectiveXYProjection(eye, transformed);

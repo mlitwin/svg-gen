@@ -105,9 +105,9 @@ const Ellipse = {
 
         const points = new Matrix(Array.from({ length: 8 }, (_, i) => {
             const angle = (i * 2 * Math.PI) / 8;
-            return [cx + rx * Math.cos(angle), cy + ry * Math.sin(angle), 0, 1];
+            return Vector([cx + rx * Math.cos(angle), cy + ry * Math.sin(angle), 0, 1]);
 
-        })).Transpose();
+        }));
 
         const transformed = transform.Mult(points);
 
