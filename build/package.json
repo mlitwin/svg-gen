@@ -8,7 +8,9 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "link": "(cd ..; npm link) && npm link @mlitwin/svg-gen",
     "make-examples": "node scripts/make-examples.js",
-    "make-samples": "node scripts/make-samples.js"
+    "make-samples": "node scripts/make-samples.js",
+    "build": "npm run make-examples && npm run make-samples"
+
   },
   "author": "",
   "license": "ISC",

@@ -18,7 +18,6 @@ const manifest = {
 };
 
 async function makeExample(file) {
-    console.log('Found JS file:', file);
     const srcPath = path.join(examplesDir, file);
 
     const outputFile = path.join(imgDir, file.replace(/\.js$/, '.svg'));
@@ -32,7 +31,6 @@ async function makeExample(file) {
         });
 
         await fs.promises.writeFile(outputFile, stdout);
-        console.log(`Saved SVG output to ${outputFile}`);
     } catch (err) {
         console.error(`Error executing or writing SVG for ${file}:`, err);
         return;
@@ -110,7 +108,6 @@ async function main() {
             path.join(docsDir, 'index.html'),
             page
         );
-        console.log('Manifest written to', path.join(docsDir, 'manifest.json'));
     } catch (err) {
         console.error('Error:', err);
         process.exit(1);
