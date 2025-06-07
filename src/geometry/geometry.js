@@ -7,8 +7,6 @@
  */
 
 import { Matrix } from '../matrix/matrix.js';
-import { Algebra } from '../algebra/algebra.js';
-import Ellipse from './ellipse.js';
 
 const Geom = {
 

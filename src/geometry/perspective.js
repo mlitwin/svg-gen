@@ -20,9 +20,6 @@ function ClipXYHalfPlane(perspective) {
     const { eye, transform, clip } = perspective;
 
     const clipPlane = clip.plane;
-    const clipPoint = clipPlane.point;
-    const clipNormal = clipPlane.normal;
-    const sidePoint = [clipPoint[0] + clipNormal[0], clipPoint[1] + clipNormal[1], clipPoint[2] + clipNormal[2]];
 
     // Transform the XY plane
     const transformedXYPointO = transform.Mult([0, 0, 0, 1]);
@@ -65,19 +62,19 @@ function ClipXYHalfPlane(perspective) {
         x: p0.x - (p1.y - p0.y),
         y: p0.y + (p1.x - p0.x)
     };
-    const pS0 =  Geom.PointFromIntersectionOfLineAndPlane(eyePoint, [pSide.x, pSide.y, 0], clipPlane);
-    const pS1 =  Geom.PointFromIntersectionOfLineAndPlane(eyePoint, [pSide.x, pSide.y, 0], transformedXYPlane);
+    const pS0 = Geom.PointFromIntersectionOfLineAndPlane(eyePoint, [pSide.x, pSide.y, 0], clipPlane);
+    const pS1 = Geom.PointFromIntersectionOfLineAndPlane(eyePoint, [pSide.x, pSide.y, 0], transformedXYPlane);
     const d0 = Geom.Distance2BetweenPoints(eyePoint, pS0);
     const d1 = Geom.Distance2BetweenPoints(eyePoint, pS1);
 
     let side = Geom.SideOfPointFromLine(perspectivePoints[0], perspectivePoints[1], pSide);
 
     // Is the clip plane between the eye and the 3D plane? Wrong side, then.
-    if(d0 < d1) {
+    if (d0 < d1) {
         side *= -1;
     }
 
-    return {points: perspectivePoints, side};
+    return { points: perspectivePoints, side };
 }
 
 /**
