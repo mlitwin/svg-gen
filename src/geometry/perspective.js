@@ -108,7 +108,7 @@ function ArcFromEllipseWithClip(ellipse, perspective) {
         return null;
     }
 
-    const perspectivePoints = clipXYLine(perspective);
+    const perspectivePoints = ClipXYHalfPlane(perspective);
     if (!perspectivePoints) {
         return null;
     }
@@ -207,6 +207,8 @@ function PolygonFromViewBoxWithPerspective(viewBox, perspective) {
     if (!clip || !clip.plane) {
         return null;
     }
+
+    const perspectivePoints = ClipXYHalfPlane(perspective);
 
     if (!perspectivePoints) {
         return null;
