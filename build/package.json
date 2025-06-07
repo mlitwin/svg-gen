@@ -1,0 +1,16 @@
+{
+  "name": "svg-build",
+  "version": "1.0.0",
+  "description": "Build scripts for svg-gen",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "link": "(cd ..; npm link) && npm link @mlitwin/svg-gen"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@mlitwin/svg-gen": "^0.1.0-alpha.2"
+  }
+}

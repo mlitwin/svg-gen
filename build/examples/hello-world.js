@@ -1,4 +1,4 @@
-import svgGen, {parseToText} from './src/svg-gen.js';
+import svgGen, {parseToText} from '@mlitwin/svg-gen';
 
 const s = new svgGen({});
 const svg = s.svg({}, [
@@ -11,4 +11,3 @@ const svg = s.svg({}, [
 );
 
 console.debug(parseToText(svg));
-

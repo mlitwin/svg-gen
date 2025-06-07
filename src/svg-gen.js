@@ -148,7 +148,7 @@ function optionsToSVGString(type, name, value) {
     return String(value)
 }
 
-export function parseToText(node) {
+function parseToText(node) {
     return treeWalker(node, { depth: 0 }, {
         open: (n) => {
             if (typeof n === "string") {
@@ -178,4 +178,6 @@ export function parseToText(node) {
 }
 
 export default svgGen;
+
+export {svgGen, parseToText}
 

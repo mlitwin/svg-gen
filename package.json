@@ -3,7 +3,12 @@
     "type": "module",
     "version": "0.1.0-alpha.2",
     "description": "A tool for generating SVG files",
-    "main": "index.js",
+    "main": "src/svg-gen.js",
+    "exports": {
+        ".": {
+            "import": "./src/svg-gen.js"
+        }
+    },
     "scripts": {
         "test": "vitest",
         "build": "node build.js"
