@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeAll } from 'vitest';
-import { Matrix } from './matrix.js';
+import { Matrix, Vector } from './matrix.js';
 
 // Add custom matchers
 
@@ -134,6 +134,23 @@ describe('Matrix', () => {
 
     it('should create a matrix from a string', () => {
         const matrix = new Matrix("1 2 3\n4 5 6");
+        expect(matrix.m).toBe(2);
+        expect(matrix.n).toBe(3);
+        expect(matrix[0]).toEqual([1, 2, 3]);
+        expect(matrix[1]).toEqual([4, 5, 6]);
+    });
+    it('should create a matrix from an array of Vector', () => {
+        // Use the already imported Vector class
+        const v1 = new Vector([1, 4]);
+        const v2 = new Vector([2, 5]);
+        const v3 = new Vector([3, 6]);
+        const arr = [v1, v2, v3];
+        const matrix = new Matrix(arr);
+        // Should result in a 2x3 matrix:
+        // [
+        //   [1, 2, 3],
+        //   [4, 5, 6]
+        // ]
         expect(matrix.m).toBe(2);
         expect(matrix.n).toBe(3);
         expect(matrix[0]).toEqual([1, 2, 3]);

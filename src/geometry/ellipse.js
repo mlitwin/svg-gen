@@ -6,7 +6,7 @@
  * @module ellipse
  */
 
-import { Matrix } from '../matrix/matrix.js';
+import { Matrix, Vector } from '../matrix/matrix.js';
 import { Algebra } from '../algebra/algebra.js';
 import Geom from './geometry.js';
 

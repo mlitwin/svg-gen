@@ -15,6 +15,9 @@ function arrayFromObject(obj) {
 }
 
 function Vector(n) {
+    if (!(this instanceof Vector)) {
+        return new Vector(n);
+    }
     if (Array.isArray(n)) {
         this.push(...n);
         return;

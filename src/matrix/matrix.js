@@ -16,7 +16,7 @@
  * const matrix = new Matrix(3, 4);
  */
 
-import { Vector } from './vector'
+import { Vector } from './vector.js'
 
 import SVD from './svd.js';
 
@@ -34,10 +34,29 @@ function matrixFromString(ret, str) {
     ret.n = ret[0].length;
 }
 
+function matrixFromArrayOfVector(ret, arr) {
+    const m = ret.m = arr[0].length;
+    const n = ret.n = arr.length;
+
+    for (let j = 0; j < m; j++) {
+        ret.push(new Array(n).fill(0));
+    }
+
+    for (let i = 0; i < m; i++) {
+        for (let j = 0; j < n; j++) {
+            ret[i][j] = arr[j][i];
+        }
+    }
+
+}
 function matrixFromArray(ret, arr) {
-    arr.forEach(row => {
-        ret.push(row.slice());
-    });
+    if (arr[0] instanceof Vector) {
+       return matrixFromArrayOfVector(ret, arr);
+    } else {
+        arr.forEach(row => {
+            ret.push(row.slice());
+        });
+    }
     ret.m = arr.length;
     ret.n = arr[0].length;
 }
@@ -51,6 +70,7 @@ function Matrix(m, n) {
         matrixFromArray(this, m);
         return;
     }
+
     this.m = m;
     this.n = n;
     for (let j = 0; j < m; j++) {

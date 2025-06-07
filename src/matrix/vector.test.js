@@ -18,10 +18,9 @@ it('should create a vector of given length with zeros', () => {
     expect(Array.from(v)).toEqual([1, 2, 3]);
 });
 
-it('should create a vectorfrom an object', () => {
+it('should create a vector from an object', () => {
     const v = new Vector({x:1, y:2, z:3});
 
     expect(Array.from(v)).toEqual([1, 2, 3]);
 });
-
 
