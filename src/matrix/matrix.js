@@ -51,7 +51,7 @@ function matrixFromArrayOfVector(ret, arr) {
 }
 function matrixFromArray(ret, arr) {
     if (arr[0] instanceof Vector) {
-       return matrixFromArrayOfVector(ret, arr);
+        return matrixFromArrayOfVector(ret, arr);
     } else {
         arr.forEach(row => {
             ret.push(row.slice());
@@ -66,6 +66,11 @@ function Matrix(m, n) {
         matrixFromString(this, m);
         return;
     }
+    if (m instanceof Vector) {
+        matrixFromArray(this, [m]);
+        return;
+    }
+    
     if (Array.isArray(m)) {
         matrixFromArray(this, m);
         return;

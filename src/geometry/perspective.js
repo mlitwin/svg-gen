@@ -220,7 +220,7 @@ function PointWithPerspective(x, y, eye, transform) {
         throw new Error("Transform matrix must be 4x4.");
     }
 
-    const point = new Matrix(Vector([[x, y, 0, 1]]));
+    const point = new Matrix(Vector([x, y, 0, 1]));
     const transformed = transform.Mult(point);
 
     const perspectivePoints = Geom.PerspectiveXYProjection(eye, transformed);
