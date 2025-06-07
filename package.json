@@ -11,7 +11,8 @@
     },
     "scripts": {
         "test": "vitest",
-        "build": "node build.js"
+        "build": "node build.js",
+        "start": "http-server docs"
     },
     "repository": {
         "type": "git",
@@ -28,6 +29,7 @@
     },
     "homepage": "https://github.com/mlitwin/svg-gen#readme",
     "devDependencies": {
+        "http-server": "^14.1.1",
         "vitest": "^3.0.9"
     }
 }
