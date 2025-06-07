@@ -16,29 +16,39 @@
  * const matrix = new Matrix(3, 4);
  */
 
+import { Vector } from './vector'
+
 import SVD from './svd.js';
+
+function matrixFromString(ret, str) {
+    const lines = str.split("\n");
+    lines.forEach(l => {
+        l = l.trim();
+
+        if (l.length) {
+            const row = l.split(/\s+/).map(v => parseFloat(v));
+            ret.push(row);
+        }
+    });
+    ret.m = ret.length;
+    ret.n = ret[0].length;
+}
+
+function matrixFromArray(ret, arr) {
+    arr.forEach(row => {
+        ret.push(row.slice());
+    });
+    ret.m = arr.length;
+    ret.n = arr[0].length;
+}
+
 function Matrix(m, n) {
     if (typeof m === 'string') {
-
-        const lines = m.split("\n");
-        lines.forEach(l => {
-            l = l.trim();
-
-            if (l.length) {
-                const row = l.split(/\s+/).map(v => parseFloat(v));
-                this.push(row);
-            }
-        });
-        this.m = this.length;
-        this.n = this[0].length;
+        matrixFromString(this, m);
         return;
     }
     if (Array.isArray(m)) {
-        m.forEach(row => {
-            this.push(row.slice());
-        });
-        this.m = m.length;
-        this.n = m[0].length;
+        matrixFromArray(this, m);
         return;
     }
     this.m = m;
@@ -356,11 +366,11 @@ Matrix.prototype.Transform = function (transformation) {
     return result;
 }
 
-Matrix.prototype.Graphics = function() {
-    if( this.m !== this.n) {
+Matrix.prototype.Graphics = function () {
+    if (this.m !== this.n) {
         throw new Error(`No graphics transformation possible when m (${this.m}) != n (${this.n})`);
     }
-    if(this.n <=1) {
+    if (this.n <= 1) {
         return this;
     }
 
@@ -371,11 +381,11 @@ Matrix.prototype.Graphics = function() {
 }
 
 
-Matrix.prototype.Graphics1 = function() {
-    if( this.m !== this.n) {
+Matrix.prototype.Graphics1 = function () {
+    if (this.m !== this.n) {
         throw new Error(`No graphics transformation possible when m (${this.m}) != n (${this.n})`);
     }
-    if(this.n <=1) {
+    if (this.n <= 1) {
         return this;
     }
 
@@ -402,32 +412,5 @@ Matrix.prototype.det = function () {
     }
     throw new Error("Determinant not implemented for matrices larger than 3x3");
 }
-
-function Vector(n) {
-    if (Array.isArray(n)) {
-        n.forEach(v => {
-            this.push(v);
-        });
-        return;
-    }
-    this.push(...new Array(n).fill(0));
-}
-
-Vector.prototype = [];
-
-Object.defineProperties(Vector.prototype, {
-    x: {
-        get() { return this[0]; },
-        set(v) { this[0] = v; }
-    },
-    y: {
-        get() { return this[1]; },
-        set(v) { this[1] = v; }
-    },
-    z: {
-        get() { return this[2]; },
-        set(v) { this[2] = v; }
-    }
-});
 
 export { Matrix, Vector };
