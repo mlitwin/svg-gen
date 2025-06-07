@@ -7,6 +7,9 @@
     "exports": {
         ".": {
             "import": "./src/svg-gen.js"
+        },
+        "./matrix/matrix.js": {
+            "import": "./src/matrix/matrix.js"
         }
     },
     "scripts": {
