@@ -14,6 +14,10 @@ jobs:
           node-version: 24
       - name: Checkout repository
         uses: actions/checkout@v4
+      - name: Test
+        run: |
+          npm ci
+          npm test
       - name: Build static files
         id: build
         run: |
