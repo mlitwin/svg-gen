@@ -14,8 +14,8 @@
     },
     "scripts": {
         "test": "vitest",
-        "build": "node build.js",
-        "start": "http-server docs"
+        "build": "(cd build && ./build.sh) && cp -r build/output/* docs",
+        "start": "http-server build/output"
     },
     "repository": {
         "type": "git",
