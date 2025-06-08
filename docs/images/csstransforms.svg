@@ -1,0 +1,5 @@
+<svg width="600" height="600" viewBox="-300 -300 600 600" xmlns="http://www.w3.org/2000/svg">
+  <circle cx="0" cy="0" r="250" style="transform: perspective(500px) rotateX(95deg) rotateY(0deg) translateZ(-100px) translateY(0px);" fill="none" stroke="black" stroke-width="1"/>
+  <circle cx="0" cy="0" r="250" style="transform: perspective(500px) rotateX(0deg) rotateY(94deg) translateZ(-100px) translateY(0px);" fill="none" stroke="black" stroke-width="1"/>
+
+</svg>

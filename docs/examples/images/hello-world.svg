@@ -1,0 +1,18 @@
+<svg width="100" height="100" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+  <title>
+    Hello World with circle
+    
+  </title>
+  <text x="10" y="20">
+    Hello, World!
+    
+  </text>
+  <g>
+    <text x="10" y="60">
+      A group
+      
+    </text>
+  </g>
+  <circle fill="none" stroke="black" cx="50" cy="50" r="40"/>
+  
+</svg>

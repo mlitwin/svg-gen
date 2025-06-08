@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Examples</title>
+</head>
+
+<body>
+    <div id="examples">
+        <h2>Hello World with circle</h2>
+        <div class="example">
+            <img src="images/hello-world.svg">
+            <pre><code>import svgGen, {parseToText} from &#x27;@mlitwin/svg-gen&#x27;;
+
+const s &#x3D; new svgGen({});
+const svg &#x3D; s.svg({}, [
+    s.title({ }, &quot;Hello World with circle&quot;),
+    s.text({ x: 10, y: 20 }, &quot;Hello, World!&quot;),
+    s.g({}, [
+        s.text({ x: 10, y: 60 }, &quot;A group&quot;)
+    ]),
+    s.circle({ cx: 50, cy: 50, r: 40, fill: &quot;none&quot;, stroke: &quot;black&quot; })
+]
+);
+
+console.debug(parseToText(svg));</code></pre>
+        </div>
+    </div>
+</body>
+
+</html>
