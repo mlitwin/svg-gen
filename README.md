@@ -20,15 +20,16 @@ Alpha software being hacked on.
 ## Usage
 
 ```javascript
-import svgGen, {parseToText} from './src/svg-gen.js';
+import svgGen, {parseToText} from '@mlitwin/svg-gen';
 
 const s = new svgGen({});
 const svg = s.svg({}, [
+    s.title({ }, "Hello World with circle"),
     s.text({ x: 10, y: 20 }, "Hello, World!"),
     s.g({}, [
-        s.text({ x: 10, y: 20 }, "A")
+        s.text({ x: 10, y: 60 }, "A group")
     ]),
-    s.circle({ cx: 50, cy: 50, r: 40 })
+    s.circle({ cx: 50, cy: 50, r: 40, fill: "none", stroke: "black" })
 ]
 );
 
@@ -55,7 +56,7 @@ yields
 
 ## `With()` Method
 
-The `With()` method is available for the `circle` and `ellipse` SVG types. This method allows you to create SVG elements with transformations applied based on a given perspective.
+The `With()` method is available for the `circle` and `ellipse` and `path` SVG types. This method allows you to create SVG elements with transformations applied based on a given perspective.
 
 ### Usage
 
@@ -67,50 +68,6 @@ The `With()` method applies a perspective transformation to a `circle` or `ellip
   - `eye` (Object): The eye position for the perspective transformation.
   - `transform` (Object): The 3D transformation matrix to apply to the object as defined in the XY Plane
   - `clip` { plane: {point, normal} }: Clipping region in 3D space. Supports a plane defined by a point and a normal.
-
-
-#### Example
-
-```javascript
-import svgGen, {parseToText} from './src/svg-gen.js';
-import { Matrix } from './src/matrix/matrix.js';
-import Geom from './src/geometry/geometry.js';
-
-const transform = [
-
-    {
-        op: "Rotate",
-        args: { axes: "Y", angle: l }
-    },
-    {
-        op: "Rotate",
-        args: { axes: "X", angle: Math.PI/4 }
-    },
-];
-
-const opts = {
-    cx: 0, cy: 0, r: R, fill: "none",
-    stroke: "black",
-    'stroke-width': 1
-};
-const perspective = {
-    eye:  { x: -50, y: 0, z: -2000 },
-    transform: Matrix.Identity(4).Transform(transform)
-}
-
-const s = new svgGen({});
-const svg = s.svg({}, [
-    s.circle({ cx: 50, cy: 50, r: 40 }).withPerspective( {
-        eye:  { x: -50, y: 0, z: -2000 },
-        transform: Matrix.Identity(4).Transform(transform)
-    })
-    ]
-);
-
-return context.s.circle(opts).With(perspective);
-
-console.debug(parseToText(svg));
-```
 
 ## Samples
 
