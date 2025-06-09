@@ -56,11 +56,21 @@ yields
 
 ## `With()` Method
 
-The `With()` method is available for the `circle` and `ellipse` and `path` SVG types. This method allows you to create SVG elements with transformations applied based on a given perspective.
+The `With()` method supports non-svg standard behaviors. Currently perspective.
 
-### Usage
+### Perspective
 
-The `With()` method applies a perspective transformation to a `circle` or `ellipse` element. It converts the geometry into an ellipse if necessary and applies rotation and scaling transformations.
+The `With( { perspective })` applies a perspective transformation with optional clipping. Supported elements are:
+
+* `circle` - transforms to an ellipse, or when viewed on-edge, a line.
+* `ellipse` - transforms to an ellipse, when viewed on-edge, a line.
+* `path` - transforms to a path.
+* `polygon` - TODO
+* `polyline` - TODO
+* `line` - TODO
+* `text` - TODO. Position of text, not transforming the text per se.
+* `rect` - TODO. Not sure what to do about corner radii.
+
 
 #### Parameters
 
