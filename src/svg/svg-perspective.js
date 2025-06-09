@@ -118,66 +118,18 @@ function elementFromCircleOrEllipse(renderContext) {
 
 function pathCommandFromArc(cur, av, perspective, _this) {
 
-    const [rx, ry, xAxisRotation, largeArcFlag, sweepFlag, x, y] = av;
-    const el = Ellipse.arcEndpointToCenterParameters(cur.x, cur.y, rx, ry, xAxisRotation, largeArcFlag, sweepFlag, x, y);
-   
-    const { ellipse, line } = Ellipse.EllipseWithPerspective(el.cx, el.cy, el.rx, el.ry, perspective.eye, perspective.transform);
+    const arc = Ellipse.ArcWithPerspective(cur, av, perspective);
 
-    { // Debugging instrumentation
-        _this._ellipse = ellipse;
-
-        const transform =
-            [
-                {
-                    op: "Rotate",
-                    args: { axes: "Z", angle: ellipse.theta, center: [ellipse.cx, ellipse.cy] }
-                }
-            ];
-
-            
-        const transformPath = transformToSVGTransform(transform);
-        _this._ellipse.transformPath = transformPath;
-    }
-    const pt1 = PointWithPerspective(x, y, perspective.eye, perspective.transform);
-
-    if (line.errorSize < 0.99) {
-
+    if (arc.line) {
         return {
             op: 'L',
-            args: [pt1.x, pt1.y]
+            args: [arc.line.pt1.x, arc.line.pt1.y]
         };
-
     }
-
-    const pt0 = PointWithPerspective(cur.x, cur.y, perspective.eye, perspective.transform);
-
-    const w0 = {
-        x: (pt0.x - el.cx) / el.rx,
-        y: (pt0.y - el.cy) / el.ry,
-    }
-    const w1 = {
-        x: (pt1.x - el.cx) / el.rx,
-        y: (pt1.y - el.cy) / el.ry,
-    }
-
-    // Sweep is in -y SVG coords?
-    const theta0 = Math.atan2(w0.y, w0.x);
-    const theta1 = Math.atan2(w1.y, w1.x); // Can't explain the - here. TODO
-    const deltaTheta = (theta1 - theta0);
-
-    const newArc = Ellipse.arcCenterToEndpointParameters(ellipse.cx, ellipse.cy, ellipse.rx, ellipse.ry, ellipse.theta, theta0, deltaTheta);
-
-    av[0] = ellipse.rx;
-    av[1] = ellipse.ry;
-    av[2] = -ellipse.theta * (180 / Math.PI);
-    av[3] = newArc.fa;
-    av[4] = newArc.fs;
-    av[5] = pt1.x;
-    av[6] = pt1.y;
 
     return {
         op: 'A',
-        args: av
+        args: arc.arc
     }
 }
 

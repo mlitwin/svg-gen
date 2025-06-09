@@ -9,6 +9,7 @@
 import { Matrix, Vector } from '../matrix/matrix.js';
 import { Algebra } from '../algebra/algebra.js';
 import Geom from './geometry.js';
+import { PointWithPerspective } from './perspective.js';
 
 const Ellipse = {
     /**
@@ -149,7 +150,7 @@ const Ellipse = {
         const x1p = cosPhi * dx + sinPhi * dy;
         const y1p = -sinPhi * dx + cosPhi * dy;
 
-      
+
         // Step 2: Correct radii
         let rx_sq = rx * rx;
         let ry_sq = ry * ry;
@@ -157,7 +158,7 @@ const Ellipse = {
         let y1p_sq = y1p * y1p;
 
         // Ensure radii are large enough
-      /*
+
         let lambda = (x1p_sq) / rx_sq + (y1p_sq) / ry_sq;
         if (lambda > 1) {
             const scale = Math.sqrt(lambda);
@@ -165,7 +166,7 @@ const Ellipse = {
             ry *= scale;
             rx_sq = rx * rx;
             ry_sq = ry * ry;
-        }*/
+        }
 
         // Step 3: Compute (cx', cy')
         let sign = (fa === fs) ? -1 : 1;
@@ -261,6 +262,55 @@ const Ellipse = {
             fa,
             fs
         };
+    },
+    ArcWithPerspective(cur, av, perspective) {
+        const [rx, ry, xAxisRotation, largeArcFlag, sweepFlag, x, y] = av;
+        const el = Ellipse.arcEndpointToCenterParameters(cur.x, cur.y, rx, ry, xAxisRotation, largeArcFlag, sweepFlag, x, y);
+        const ret = {}
+
+        const { ellipse, line } = Ellipse.EllipseWithPerspective(el.cx, el.cy, el.rx, el.ry, perspective.eye, perspective.transform);
+
+        { // Debugging instrumentation
+            ret._ellipse = ellipse;
+        }
+        
+        const pt0 = PointWithPerspective(cur.x, cur.y, perspective.eye, perspective.transform);
+        const pt1 = PointWithPerspective(x, y, perspective.eye, perspective.transform);
+
+        if (line.errorSize < 0.99) {
+            ret.line = {p0,p1};
+
+            return ret;
+        }
+
+
+        const w0 = {
+            x: (pt0.x - el.cx) / el.rx,
+            y: (pt0.y - el.cy) / el.ry,
+        }
+        const w1 = {
+            x: (pt1.x - el.cx) / el.rx,
+            y: (pt1.y - el.cy) / el.ry,
+        }
+
+        // Sweep is in -y SVG coords?
+        const theta0 = Math.atan2(w0.y, w0.x);
+        const theta1 = Math.atan2(w1.y, w1.x); // Can't explain the - here. TODO
+        const deltaTheta = (theta1 - theta0);
+
+        const newArc = Ellipse.arcCenterToEndpointParameters(ellipse.cx, ellipse.cy, ellipse.rx, ellipse.ry, ellipse.theta, theta0, deltaTheta);
+
+        av[0] = ellipse.rx;
+        av[1] = ellipse.ry;
+        av[2] = -ellipse.theta * (180 / Math.PI);
+        av[3] = newArc.fa;
+        av[4] = newArc.fs;
+        av[5] = pt1.x;
+        av[6] = pt1.y;
+
+        ret.arc = av
+
+        return ret;
     }
 };
 
