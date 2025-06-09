@@ -123,10 +123,11 @@ function treeWalker(node, context, handlers) {
     let result = '';
 
     if (open) {
-        result += spacing + open(renderNode) + '\n';
+        result += spacing + open(renderNode);
     }
 
     if (renderNode.children) {
+        result += '\n';
         renderNode.children.forEach(child => {
             result += treeWalker(child, newContext, handlers);
         });
@@ -152,7 +153,7 @@ function parseToText(node) {
     return treeWalker(node, { depth: 0 }, {
         open: (n) => {
             if (typeof n === "string") {
-                return n;
+                return n.trim();
             }
             let val = [
                 `<${n.type}`,
