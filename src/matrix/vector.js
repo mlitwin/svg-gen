@@ -1,14 +1,43 @@
+/**
+ * @fileoverview
+ * Defines a flexible n-dimensional Vector class with array-like behavior.
+ * Supports construction from arrays, objects with x/y/z/w properties, or a dimension count.
+ * Provides convenient x, y, z property accessors.
+ */
+
+const nameToIndex = {
+    x: 0,
+    y: 1,
+    z: 2,
+    w: 3
+};
+
+const indexToName = {
+    0: 'x',
+    1: 'y',
+    2: 'z',
+    3: 'w'
+};
+
+function dimensionFromObject(obj) {
+    for(let i = nameToIndex.length - 1; i >= 0; i--) {
+        const name = indexToName[i];
+        if (obj[name] !== undefined) {
+            return i + 1;
+        }
+    }
+    return 0;
+    
+}
 
 function arrayFromObject(obj) {
-    const ret = [];
-    if (obj.x) {
-        ret.push(obj.x);
-    }
-    if (obj.y) {
-        ret.push(obj.y);
-    }
-    if (obj.z) {
-        ret.push(obj.z);
+    const dim = dimensionFromObject(obj);
+    const ret = [].fill(0, 0, dim);
+    for (const [k, v] of Object.entries(obj)) {
+        const index = nameToIndex[k];
+        if (index !== undefined) {
+            ret[index] = v;
+        }
     }
 
     return ret;
