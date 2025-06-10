@@ -107,7 +107,6 @@ const Ellipse = {
         const points = new Matrix(Array.from({ length: 8 }, (_, i) => {
             const angle = (i * 2 * Math.PI) / 8;
             return Vector([cx + rx * Math.cos(angle), cy + ry * Math.sin(angle), 0, 1]);
-
         }));
 
         const transformed = transform.Mult(points);
@@ -273,12 +272,12 @@ const Ellipse = {
         { // Debugging instrumentation
             ret._ellipse = ellipse;
         }
-        
+
         const pt0 = PointWithPerspective(cur.x, cur.y, perspective.eye, perspective.transform);
         const pt1 = PointWithPerspective(x, y, perspective.eye, perspective.transform);
 
         if (line.errorSize < 0.99) {
-            ret.line = {p0,p1};
+            ret.line = { pt0, pt1 };
 
             return ret;
         }
@@ -302,7 +301,7 @@ const Ellipse = {
 
         av[0] = ellipse.rx;
         av[1] = ellipse.ry;
-        av[2] = -ellipse.theta * (180 / Math.PI);
+        av[2] = ellipse.theta * (180 / Math.PI);
         av[3] = newArc.fa;
         av[4] = newArc.fs;
         av[5] = pt1.x;
