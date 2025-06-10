@@ -193,7 +193,7 @@ function makeSphere(context, perspective) {
 }
 
 const Z = 2500;
-const eye = { x: 1000, y: 1000, z: Z };
+const eye = { x: 0, y: 0, z: Z };
 const clipCenter = { x: 0, y: 0, z: R * R / Z };
 const clipNorm = Math.sqrt((eye.x - clipCenter.x) ** 2 + (eye.y - clipCenter.y) ** 2 + (eye.z - clipCenter.z) ** 2);
 
