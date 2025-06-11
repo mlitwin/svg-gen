@@ -243,7 +243,6 @@ describe('Ellipse', () => {
                         } else {
                             const av1 = arcWithPerspective.arc;
                             const [rx1, ry1, xAxisRotation1, largeArcFlag1, sweepFlag1, x1, y1] = av1;
-                            console.log(av1)
                             expect(rx1).toBeCloseTo(ellipseWithPerspective.ellipse.rx);
                             expect(ry1).toBeCloseTo(ellipseWithPerspective.ellipse.ry);
                         }

@@ -24,6 +24,10 @@ function makeClipPath(polygon, transform) {
     if (!polygon) {
         return null;
     }
+    if( polygon.length < 3) {
+        // Return a clip-path that excludes everything (no drawing)
+        return "polygon(0 0, 0 0, 0 0)";
+    }
     const svd = transform.SVD();
 
     const pathData = polygon.map((point) => {

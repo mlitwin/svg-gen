@@ -43,7 +43,12 @@ function ClipXYHalfPlane(perspective) {
 
     const intersectionLine = Geom.LineFromIntersectionOfPlanes(clipPlane, transformedXYPlane);
     if (!intersectionLine) {
-        return null;
+        const d0 = Geom.DistanceFromPointToPlane(Vector(eye), clipPlane);
+        const d1 = Geom.DistanceFromPointToPlane(Vector(eye), transformedXYPlane);
+        return {
+            points: null,
+            side: d0 < d1 ? -1 : 1
+        };
     }
 
     const eyePoint = [eye.x, eye.y, eye.z];
@@ -104,8 +109,8 @@ function PolygonFromViewBoxWithPerspective(viewBox, perspective) {
 
     const perspectivePoints = ClipXYHalfPlane(perspective);
 
-    if (!perspectivePoints) {
-        return null;
+    if (!perspectivePoints.points) {
+        return perspectivePoints.side === 1 ? viewBoxVertices : null;
     }
 
     return Geom.PolygonFromLineIntersectionPolygon(perspectivePoints.points[0], perspectivePoints.points[1], perspectivePoints.side, viewBoxVertices);

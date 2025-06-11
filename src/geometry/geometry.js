@@ -381,6 +381,24 @@ const Geom = {
         } else {
             return { segment: diagonal2, errorSize: errorSize2 };
         }
+    },
+    DistanceFromPointToPlane(point, plane) {
+        const [px, py, pz] = point;
+        const [planePointX, planePointY, planePointZ] = plane.point;
+        const [nx, ny, nz] = plane.normal;
+
+        // Calculate the vector from the point to the plane point
+        const vectorToPlane = [
+            px - planePointX,
+            py - planePointY,
+            pz - planePointZ
+        ];
+
+        // Calculate the distance from the point to the plane along the normal
+        const distance = (vectorToPlane[0] * nx + vectorToPlane[1] * ny + vectorToPlane[2] * nz) /
+            Math.sqrt(nx ** 2 + ny ** 2 + nz ** 2);
+
+        return Math.abs(distance);
     }
 };
 

@@ -1,10 +1,68 @@
 import { describe, it, expect } from 'vitest';
 import { Matrix, Vector } from '../matrix/matrix.js';
+import Geom from './geometry.js';
 import {
     ClipXYHalfPlane,
     PolygonFromViewBoxWithPerspective,
     PointWithPerspective
 } from './perspective.js';
+
+const perspectives = [
+    {
+        eye: { x: 0, y: 0, z: 2 },
+        transform: Matrix.Identity(4),
+    },
+    {
+        eye: { x: 0, y: 0, z: 2500 },
+        transform: Matrix.Identity(4).Transform([
+            {
+                op: "Translate",
+                args: { vec: [0, -100, 0] }
+            },
+            {
+                op: "Rotate",
+                args: { axes: "X", angle: Math.PI / 2 }
+            },
+        ])
+    },
+    {
+        eye: { x: 0, y: 0, z: 2500 },
+        transform: Matrix.Identity(4).Transform([
+            {
+                op: "Rotate",
+                args: { axes: "Y", angle: Math.PI / 4 }
+            },
+        ])
+    },
+    {
+        eye: { x: 1000, y: 0, z: 2500 },
+        transform: Matrix.Identity(4).Transform([
+            {
+                op: "Translate",
+                args: { vec: [0, -100, 0] }
+            },
+            {
+                op: "Rotate",
+                args: { axes: "X", angle: Math.PI / 2 }
+            },
+        ])
+    },
+];
+
+const clips = [
+    {
+        plane: {
+            point: [0, 0, 5],
+            normal: [1, 0, 0]
+        }
+    },
+    {
+        plane: {
+            point: [0, 0, 1],
+            normal: [0, 0, 1]
+        }
+    }
+];
 
 // Minimal Geom implementation for test (since no mocks allowed, but Geom is imported in perspective.js)
 // We'll use basic stubs for Geom methods, but since the user said "no mocks", we assume the real Geom is present in the environment.
@@ -47,7 +105,29 @@ describe('ClipXYHalfPlane', () => {
         };
         // The XY plane after transform is also z=0, so intersection is undefined (should return null)
         const result = ClipXYHalfPlane(noIntersectPerspective);
-        expect(result).toBeNull();
+        expect(result.points).toBeNull();
+    });
+    it('returns intersection for each perspective and clip', () => {
+        perspectives.forEach((perspectiveBase, i) => {
+            clips.forEach((clip, j) => {
+                const perspective = {
+                    ...perspectiveBase,
+                    clip
+                };
+                const result = ClipXYHalfPlane(perspective);
+                if (result.points) {
+                    const p = {
+                        x: clip.plane.point[0] + clip.plane.normal[0],
+                        y: clip.plane.point[1] + clip.plane.normal[1],
+                        z: clip.plane.point[2] + clip.plane.normal[2],
+                        w: 1
+                    }
+                    const p1 = Geom.PerspectiveXYProjection(perspective.eye, new Matrix([Vector(p)]));
+                    const side = Geom.SideOfPointFromLine(result.points[0], result.points[1], p1[0]);
+                    // TODO console.log(result, side);
+                }
+            });
+        });
     });
 });
 
