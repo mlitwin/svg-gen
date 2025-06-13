@@ -1,6 +1,6 @@
 // src/svg-gen.js
 
-import { svgTypes } from "./svg/svg-types.js";
+import { svgTypes, attributeTypes } from "./svg/svg-types.js";
 import { addWithPerspective } from "./svg/svg-perspective.js";
 
 addWithPerspective(svgTypes);
@@ -22,8 +22,9 @@ function node(type, spec, options, children, s) {
         const haveOptVal = opt.name in options;
         if (opt.default || haveOptVal) {
             let value = haveOptVal ? options[opt.name] : opt.default;
-            if (opt.fromSVGString && typeof value === 'string') {
-                value = opt.fromSVGString(value);
+            const optionType = opt.type ? opt.type : "default";
+            if(typeof value === 'string') {
+                value = attributeTypes[optionType].fromSVGString(value);
             }
             const optWithValue = {
                 name: opt.name,
@@ -143,10 +144,8 @@ function treeWalker(node, context, handlers) {
 function optionsToSVGString(type, name, value) {
     const optionMap = svgTypes[type].optionsMap;
     const option = optionMap[name];
-    if (option.toSVGString && typeof value !== 'string') {
-        return option.toSVGString(value);
-    }
-    return String(value)
+    const optionType = option.type ? option.type : "default";
+    return attributeTypes[optionType].toSVGString(value);
 }
 
 function parseToText(node) {

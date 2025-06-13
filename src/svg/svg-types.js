@@ -1,6 +1,28 @@
 // https://developer.mozilla.org/en-US/docs/Web/SVG/Element
 import { svgPathDStringFromArray, svgPathDArrayFromString } from "./svg-path.js";
 
+const attributeTypes = {
+    "default": {
+        fromSVGString: v => v,
+        toSVGString: v => v
+    },
+    "string": {
+        fromSVGString: v => String(v),
+        toSVGString: v => String(v)
+    },
+    "pathSegmentArray": {
+        fromSVGString: svgPathDArrayFromString,
+        toSVGString: svgPathDStringFromArray
+    },
+    "rect": {
+        fromSVGString: v => {
+            const [x, y, width, height] = v.split(' ').map(Number);
+            return { x, y, width, height };
+        },
+        toSVGString: v => `${v.x} ${v.y} ${v.width} ${v.height}`    
+    }
+}
+
 const allElementsOptions = [
     { name: "transform" },
     { name: "id" },
@@ -320,12 +342,8 @@ const svgTypes = {
         options: [
             {
                 name: "d",
-                toSVGString: function (value) {
-                    return svgPathDStringFromArray(value);
-                },
-                fromSVGString: function (value) {
-                    return svgPathDArrayFromString(value);
-                }
+                type: "pathSegmentArray",
+
             },
             { name: "marker-start" },
             { name: "marker-mid" },
@@ -413,13 +431,7 @@ const svgTypes = {
             { name: "height", default: "100" },
             {
                 name: "viewBox", default: "0 0 100 100",
-                toSVGString: function (value) {   
-                    return `${value.x} ${value.y} ${value.width} ${value.height}`;
-                },
-                fromSVGString: function (value) {
-                    const [x, y, width, height] = value.split(' ').map(Number);
-                    return { x, y, width, height };
-                }
+                type: "rect",
             },
             { name: "xmlns", default: "http://www.w3.org/2000/svg" }
         ]
@@ -478,4 +490,4 @@ for (const type in svgTypes) {
 
 }
 
-export { svgTypes };
+export { svgTypes, attributeTypes };
