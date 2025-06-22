@@ -1,7 +1,7 @@
 {
     "name": "@mlitwin/svg-gen",
     "type": "module",
-    "version": "0.1.0-alpha.2",
+    "version": "0.1.0-alpha.3",
     "description": "A tool for generating SVG files",
     "main": "src/svg-gen.js",
     "exports": {
