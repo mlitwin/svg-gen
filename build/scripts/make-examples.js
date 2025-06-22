@@ -260,7 +260,7 @@ function makeCoordSys(opts) {
 }
 
 const tangentStandard = makeCoordSys({ x1: 0, y1: 0, x2: 1, y2: 1 });
-fs.writeFileSync(`${docsDir}/spherestandard-tanget.svg`, parseToText(tangentStandard));
+fs.writeFileSync(`${docsDir}/spherestandard-tangent.svg`, parseToText(tangentStandard));
 
 const tangentSkew = makeCoordSys({ x1: .75, y1: .25, x2: 1, y2: 1 });
-fs.writeFileSync(`${docsDir}/sphereskew-tanget.svg`, parseToText(tangentSkew));
+fs.writeFileSync(`${docsDir}/sphereskew-tangent.svg`, parseToText(tangentSkew));
