@@ -10,6 +10,10 @@ const attributeTypes = {
         fromSVGString: v => String(v),
         toSVGString: v => String(v)
     },
+    "number": {
+        fromSVGString: v => Number(v),
+        toSVGString: v => String(v)
+    },
     "pathSegmentArray": {
         fromSVGString: svgPathDArrayFromString,
         toSVGString: svgPathDStringFromArray
@@ -19,7 +23,7 @@ const attributeTypes = {
             const [x, y, width, height] = v.split(' ').map(Number);
             return { x, y, width, height };
         },
-        toSVGString: v => `${v.x} ${v.y} ${v.width} ${v.height}`    
+        toSVGString: v => `${v.x} ${v.y} ${v.width} ${v.height}`
     }
 }
 

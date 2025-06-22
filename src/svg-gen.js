@@ -145,7 +145,10 @@ function optionsToSVGString(type, name, value) {
     const optionMap = svgTypes[type].optionsMap;
     const option = optionMap[name];
     const optionType = option.type ? option.type : "default";
-    return attributeTypes[optionType].toSVGString(value);
+    if(typeof value !== 'string') {
+        value= attributeTypes[optionType].toSVGString(value);
+    }
+    return value;
 }
 
 function parseToText(node) {
